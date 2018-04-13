@@ -1,8 +1,29 @@
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.GridPane?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<GridPane fx:controller="sample.MainViewModel"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121" fx:controller="sample.MainViewModel">
+    <top>
+        <!-- メニュー項目 -->
+        <MenuBar>
+            <Menu text="ファイル(_F)">
+                <MenuItem fx:id="ExitMenu" text="終了(_X)" />
+            </Menu>
+            <Menu text="ヘルプ(_H)">
+                <MenuItem fx:id="AboutMenu" text="バージョン情報(_A)" />
+            </Menu>
+        </MenuBar>
+    </top>
+    <center>
+        <ScrollPane BorderPane.alignment="CENTER">
+         <content>
+            <Pane prefHeight="800.0" prefWidth="800.0" />
+         </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

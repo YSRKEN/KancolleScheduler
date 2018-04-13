@@ -17,9 +17,15 @@ public class Main extends Application {
      * @throws Exception 例外が投げられたらアプリが終了する
      */
     @Override public void start(Stage primaryStage) throws Exception{
+        // FXMLを読み込む
         Parent root = FXMLLoader.load(getClass().getResource("MainView.fxml"));
-        primaryStage.setTitle("Hello World");
-        primaryStage.setScene(new Scene(root, 300, 275));
+        // タイトルを設定する
+        primaryStage.setTitle("艦これスケジューラー");
+        // シーングラフとウィンドウの大きさを設定する
+        primaryStage.setScene(new Scene(root, 600, 400));
+        // ×ボタンを押した際の挙動を設定する
+        primaryStage.setOnCloseRequest(e -> System.exit(0));
+        // Stageを表示する
         primaryStage.show();
     }
 
