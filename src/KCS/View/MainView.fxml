@@ -19,7 +19,7 @@
     <center>
         <ScrollPane BorderPane.alignment="CENTER">
          <content>
-            <Canvas fx:id="TaskBoard" height="800.0" width="800.0" />
+            <Canvas fx:id="TaskBoard"/>
          </content>
         </ScrollPane>
     </center>

@@ -38,8 +38,8 @@ public class MainViewModel {
      */
     @FXML private void initialize(){
         // コントロールの大きさを直接指定
-        TaskBoard.setWidth(Utility.TASK_BOARD_WIDTH);
-        TaskBoard.setHeight(Utility.TASK_BOARD_HEIGHT);
+        TaskBoard.setWidth(Utility.CANVAS_WIDTH);
+        TaskBoard.setHeight(Utility.CANVAS_HEIGHT);
         // プロパティのバインディング
         StatusMessage.textProperty().bind(mainModel.StatusMessage);
         // コマンドのバインディング

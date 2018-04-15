@@ -42,6 +42,23 @@ public class Utility {
      * TaskBoardの縦幅
      */
     public static final int TASK_BOARD_HEIGHT = TASK_PIECE_HEIGHT * LANES;
+    /**
+     * 時刻表示をするためのスペース
+     */
+    public static final int ADD_TASK_BOARD_HEIGHT = 24;
+    /**
+     * 周囲へのマージン
+     */
+    public static final int TASK_BOARD_MARGIN = 20;
+    /**
+     * Canvasの横幅
+     */
+    public static final int CANVAS_WIDTH = TASK_BOARD_WIDTH + TASK_BOARD_MARGIN * 2;
+    /**
+     * Canvasの縦幅
+     */
+    public static final int CANVAS_HEIGHT = TASK_BOARD_HEIGHT + ADD_TASK_BOARD_HEIGHT + TASK_BOARD_MARGIN * 2;
+
 
     /**
      * ダイアログを表示

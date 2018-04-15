@@ -12,6 +12,7 @@ import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import KCS.Library.Utility;
+import javafx.scene.text.Font;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,21 +126,39 @@ public class MainModel {
         // グラフィックスコンテキストを作成
         GraphicsContext gc = p.getGraphicsContext2D();
         // 画面を一旦削除
-        gc.clearRect(0,0,Utility.TASK_BOARD_WIDTH,Utility.TASK_BOARD_HEIGHT);
+        gc.clearRect(0,0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
         gc.setStroke(Color.GRAY);
         for(int row = 0; row <= Utility.LANES; ++row){
-            gc.strokeLine(0, row * Utility.TASK_PIECE_HEIGHT, Utility.TASK_BOARD_WIDTH, row * Utility.TASK_PIECE_HEIGHT);
+            gc.strokeLine(
+                    Utility.TASK_BOARD_MARGIN,
+                    Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT,
+                    Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT);
         }
         for(int column = 0; column <= Utility.TASK_PIECE_SIZE; column += 60 / Utility.MIN_TASK_PIECE_TIME){
-            gc.strokeLine(column * Utility.TASK_PIECE_WIDTH, 0, column * Utility.TASK_PIECE_WIDTH, Utility.TASK_BOARD_HEIGHT);
+            gc.strokeLine(
+                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN,
+                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT);
+        }
+        // 時刻を表示する
+        gc.setFont(Font.font(16));
+        gc.setFill(Color.BLACK);
+        for(int hour = 5; hour <= 5 + 24; ++hour){
+            int hour2 = hour % 24;
+            gc.fillText(
+                    String.format("%d:00", hour2),
+                    Utility.TASK_BOARD_MARGIN + (hour - 5) * Utility.TASK_PIECE_WIDTH * 60 / Utility.MIN_TASK_PIECE_TIME - 16,
+                    Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
         }
         // 既存のタスクを表示する
         gc.setFill(Color.LIGHTSKYBLUE);
         gc.setStroke(Color.BLACK);
         for(TaskInfo taskInfo : expTaskList){
-            int x = taskInfo.getTimePosition() * Utility.TASK_PIECE_WIDTH;
-            int y = taskInfo.getLane() * Utility.TASK_PIECE_HEIGHT;
+            int x = Utility.TASK_BOARD_MARGIN + taskInfo.getTimePosition() * Utility.TASK_PIECE_WIDTH;
+            int y = Utility.TASK_BOARD_MARGIN + taskInfo.getLane() * Utility.TASK_PIECE_HEIGHT;
             int w = taskInfo.getExpInfo().getTime() / Utility.MIN_TASK_PIECE_TIME * Utility.TASK_PIECE_WIDTH;
             int h = Utility.TASK_PIECE_HEIGHT;
             gc.fillRect(x, y, w, h);
