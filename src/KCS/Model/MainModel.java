@@ -282,14 +282,20 @@ public class MainModel {
             int allMinute = taskInfo.getTimePosition() * Utility.MIN_TASK_PIECE_TIME;
             int hour = ((allMinute / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
             int minute = allMinute % Utility.MINUTE_PER_HOUR;
+            // 終了時刻も時：分形式に変換
+            int allMinute2 = taskInfo.getEndTimePosition() * Utility.MIN_TASK_PIECE_TIME;
+            int hour2 = ((allMinute2 / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
+            int minute2 = allMinute2 % Utility.MINUTE_PER_HOUR;
             // 結果を表示
             Platform.runLater(() -> StatusMessage.setValue(
                     String.format(
-                            "%s(第%d艦隊,%d:%d)",
+                            "%s(第%d艦隊,%02d:%02d-%02d:%02d)",
                             taskInfo.getName(),
                             taskInfo.getLane() + 1,
                             hour,
-                            minute
+                            minute,
+                            hour2,
+                            minute2
                     )
             ));
         }
