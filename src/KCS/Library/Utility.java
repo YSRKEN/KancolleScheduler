@@ -31,9 +31,26 @@ public class Utility {
      */
     public static final int LANES = 3;
     /**
+     * 一時間は何分？
+     */
+    public static final int MINUTE_PER_HOUR = 60;
+    /**
+     * 一日は何時間？
+     */
+    public static final int HOUR_PER_DAY = 24;
+    /**
+     * 時間間隔が1時間で横に幾つ並ぶか？
+     */
+    public static final int TASK_PIECE_PER_HOUR = MINUTE_PER_HOUR / MIN_TASK_PIECE_TIME;
+    /**
      * 時間間隔が24時間で横に幾つ並ぶか？
      */
-    public static final int TASK_PIECE_SIZE = 24 * 60 / MIN_TASK_PIECE_TIME;
+    public static final int TASK_PIECE_SIZE = HOUR_PER_DAY * TASK_PIECE_PER_HOUR;
+    /**
+     * TaskBoardが何時から始まるか？
+     * (5だとAM5:00からということになる)
+     */
+    public static final int TASK_BOARD_FIRST_HOUR = 5;
     /**
      * TaskBoardの横幅
      */

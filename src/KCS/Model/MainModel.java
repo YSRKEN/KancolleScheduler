@@ -162,22 +162,26 @@ public class MainModel {
             double newX = dragEndPointX.getValue() + draggedExpTaskOffsetX.getValue();
             double newY = dragEndPointY.getValue() + draggedExpTaskOffsetY.getValue();
             int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
-            int newLane = (int)Math.round((newY + Utility.TASK_PIECE_HEIGHT / 2 - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+            int newLane = (int)Math.round((newY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
             // 他のタスクと重なるようには置けないし、同名遠征を別レーンで重なるように配置できないことに注意
             TaskInfo draggedTask = expTaskList.get(index);
             boolean rejectFlg = false;
             for(int i = 0; i < expTaskList.size(); ++i) {
+                // ドラッグ中のタスクと他のタスクの番号が同じ場合は飛ばす
                 if(i == index)
                     continue;
+                // 横方向に見て、ドラッグ中のタスクと他のタスクが重なっていなければ飛ばす
                 TaskInfo taskInfo = expTaskList.get(i);
                 if(taskInfo.getEndTimePosition() <= newTimePosition)
                     continue;
                 if(taskInfo.getTimePosition() >= newTimePosition + draggedTask.getTimePositionwidth())
                     continue;
+                // 遠征名が被っている場合は、被っているとみなす
                 if(draggedTask.getExpInfo().getName().equals(taskInfo.getExpInfo().getName())){
                     rejectFlg = true;
                     break;
                 }
+                // 遠征名が異なっていても、同一艦隊の場合は被っているとみなす
                 if(newLane == taskInfo.getLane()){
                     rejectFlg = true;
                     break;
@@ -219,7 +223,7 @@ public class MainModel {
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH,
                     Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT);
         }
-        for(int column = 0; column <= Utility.TASK_PIECE_SIZE; column += 60 / Utility.MIN_TASK_PIECE_TIME){
+        for(int column = 0; column <= Utility.TASK_PIECE_SIZE; column += Utility.TASK_PIECE_PER_HOUR){
             gc.strokeLine(
                     Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN,
@@ -229,11 +233,11 @@ public class MainModel {
         // 時刻を表示する
         gc.setFont(Font.font(16));
         gc.setFill(Color.BLACK);
-        for(int hour = 5; hour <= 5 + 24; ++hour){
-            int hour2 = hour % 24;
+        for(int hour = Utility.TASK_BOARD_FIRST_HOUR; hour <= Utility.TASK_BOARD_FIRST_HOUR + Utility.HOUR_PER_DAY; ++hour){
+            int hour2 = hour % Utility.HOUR_PER_DAY;
             gc.fillText(
                     String.format("%d:00", hour2),
-                    Utility.TASK_BOARD_MARGIN + (hour - 5) * Utility.TASK_PIECE_WIDTH * 60 / Utility.MIN_TASK_PIECE_TIME - 16,
+                    Utility.TASK_BOARD_MARGIN + (hour - Utility.TASK_BOARD_FIRST_HOUR) * Utility.TASK_PIECE_WIDTH * Utility.TASK_PIECE_PER_HOUR - 16,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
         }
         // 既存のタスクを表示する(ドラッグ中のものは除く)
@@ -273,8 +277,8 @@ public class MainModel {
             TaskInfo taskInfo = expTaskList.get(selectedExpTaskIndex.getValue());
             // タスクの開始時刻を時：分形式に変換
             int allMinute = taskInfo.getTimePosition() * Utility.MIN_TASK_PIECE_TIME;
-            int hour = ((allMinute / 60) + 5) % 24;
-            int minute = allMinute % 60;
+            int hour = ((allMinute / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
+            int minute = allMinute % Utility.MINUTE_PER_HOUR;
             // 結果を表示
             Platform.runLater(() -> statusMessage.setValue(
                     String.format(

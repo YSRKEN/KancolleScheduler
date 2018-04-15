@@ -40,19 +40,18 @@ public class TaskInfo {
      */
     public int getTimePosition() { return timePosition; }
     /**
-     * 終了タイミングを返す
-     * @return 終了タイミング
-     */
-    public int getEndTimePosition(){
-        return timePosition + getTimePositionwidth();
-    }
-
-    /**
      * 遠征の期間をTaskPiece単位で返す
      * @return 遠征の期間
      */
     public int getTimePositionwidth(){
         return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME;
+    }
+    /**
+     * 終了タイミングを返す
+     * @return 終了タイミング
+     */
+    public int getEndTimePosition(){
+        return getTimePosition() + getTimePositionwidth();
     }
     /**
      * 第n艦隊かをセットする
