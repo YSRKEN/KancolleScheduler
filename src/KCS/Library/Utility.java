@@ -47,6 +47,10 @@ public class Utility {
      */
     public static final int TASK_PIECE_SIZE = HOUR_PER_DAY * TASK_PIECE_PER_HOUR;
     /**
+     * 1時間分の時間間隔のピクセル数
+     */
+    public static final double HOUR_TASK_PIECE_WIDTH = TASK_PIECE_PER_HOUR * TASK_PIECE_WIDTH;
+    /**
      * TaskBoardが何時から始まるか？
      * (5だとAM5:00からということになる)
      */

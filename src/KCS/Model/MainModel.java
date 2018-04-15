@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.PointLight;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
@@ -14,6 +15,7 @@ import javafx.scene.paint.Color;
 import KCS.Library.Utility;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.util.Pair;
 import sun.awt.FontDescriptor;
 import sun.font.FontFamily;
 
@@ -34,13 +36,9 @@ public class MainModel {
 
     // privateなフィールド
     /**
-     * ドラッグ途中点のX座標
+     * ドラッグ途中点の座標
      */
-    private double dragMediumPointX;
-    /**
-     * ドラッグ途中点のY座標
-     */
-    private double dragMediumPointY;
+    private Pair<Double, Double> dragMediumPoint;
     /**
      * 現在選択しているタスクブロックのインデックス
      */
@@ -50,13 +48,9 @@ public class MainModel {
      */
     private int draggedExpTaskIndex = -1;
     /**
-     * 現在ドラッグしているタスクブロックの左上座標(マウスポインタ基準)のX座標
+     * 現在ドラッグしているタスクブロックの左上座標(マウスポインタ基準)
      */
-    private double draggedExpTaskOffsetX;
-    /**
-     * 現在ドラッグしているタスクブロックの左上座標(マウスポインタ基準)のY座標
-     */
-    private double draggedExpTaskOffsetY;
+    private Pair<Double, Double> draggedExpTaskOffset;
     /**
      * 遠征のタスクブロック一覧
      */
@@ -107,8 +101,9 @@ public class MainModel {
         int index = getTaskBlockIndex(e.getX(), e.getY());
         if(index != -1){
             draggedExpTaskIndex = index;
-            draggedExpTaskOffsetX = expTaskList.get(draggedExpTaskIndex).getX() - e.getX();
-            draggedExpTaskOffsetY = expTaskList.get(draggedExpTaskIndex).getY() - e.getY();
+            draggedExpTaskOffset = new Pair<>(
+                    expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
+                    expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
         }
         // ドラッグイベントを許可する
         taskBoard.startFullDrag();
@@ -120,8 +115,7 @@ public class MainModel {
      */
     public void TaskBoardMouseDragOver(MouseDragEvent e){
         // ドラッグ途中点の座標を記録する
-        dragMediumPointX = e.getX();
-        dragMediumPointY = e.getY();
+        dragMediumPoint = new Pair<>(e.getX(), e.getY());
         //Canvasを再描画する
         RedrawCanvasCommand(true);
         //
@@ -139,8 +133,8 @@ public class MainModel {
             // 当該タスクブロックの情報
             TaskInfo draggedTask = expTaskList.get(index);
             // 当該タスクブロックの左上位置
-            double newX = e.getX() + draggedExpTaskOffsetX;
-            double newY = e.getY() + draggedExpTaskOffsetY;
+            double newX = e.getX() + draggedExpTaskOffset.getKey();
+            double newY = e.getY() + draggedExpTaskOffset.getValue();
             // 当該タスクブロックのタイミングおよび終了タイミングおよび艦隊番号
             int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
             int newEndtimePosition = newTimePosition + draggedTask.getTimePositionwidth();
@@ -227,9 +221,9 @@ public class MainModel {
         });
         IntStream.range(0, Utility.HOUR_PER_DAY + 1).forEach(column -> {
             gc.strokeLine(
-                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_PER_HOUR * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + column * Utility.HOUR_TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN,
-                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_PER_HOUR * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + column * Utility.HOUR_TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT);
         });
         // 時刻を表示する
@@ -239,7 +233,7 @@ public class MainModel {
             int hour2 = hour % Utility.HOUR_PER_DAY;
             gc.fillText(
                     String.format("%d:00", hour2),
-                    Utility.TASK_BOARD_MARGIN + (hour - Utility.TASK_BOARD_FIRST_HOUR) * Utility.TASK_PIECE_WIDTH * Utility.TASK_PIECE_PER_HOUR - 16,
+                    Utility.TASK_BOARD_MARGIN + (hour - Utility.TASK_BOARD_FIRST_HOUR) * Utility.HOUR_TASK_PIECE_WIDTH - 16,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
         });
         // 既存のタスクを表示する(ドラッグ中のものは除く)
@@ -264,8 +258,8 @@ public class MainModel {
         if(draggedExpTaskIndex != -1){
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex);
-            double x = dragMediumPointX + draggedExpTaskOffsetX;
-            double y = dragMediumPointY + draggedExpTaskOffsetY;
+            double x = dragMediumPoint.getKey()   + draggedExpTaskOffset.getKey();
+            double y = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue();
             double w = taskInfo.getW();
             double h = taskInfo.getH();
             gc.setFill(Color.GREEN);
