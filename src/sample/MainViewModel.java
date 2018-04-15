@@ -20,7 +20,7 @@ public class MainViewModel {
      */
     @FXML private MenuItem AboutMenu;
     /**
-     * 遠征タスクを表示するためのPane
+     * 遠征タスクを表示するためのCanvas
      */
     @FXML private Canvas TaskBoard;
     /**
@@ -43,7 +43,7 @@ public class MainViewModel {
         ExitMenu.setOnAction(e -> mainModel.ExitCommand());
         AboutMenu.setOnAction(e -> mainModel.ShowVersionInfoCommand());
         TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e, this.TaskBoard));
-        TaskBoard.setOnMouseDragOver(e -> mainModel.TaskBoardMouseDragOver(e));
-        TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e));
+        TaskBoard.setOnMouseDragOver(e -> mainModel.TaskBoardMouseDragOver(e, this.TaskBoard));
+        TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e, this.TaskBoard));
     }
 }

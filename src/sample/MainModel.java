@@ -5,11 +5,14 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 
 /**
  * MainViewと接続されるModel
@@ -56,6 +59,24 @@ public class MainModel {
         ));
     }
 
+    /**
+     * TaskBoardを再描画する
+     * @param p TaskBoard
+     * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
+     */
+    private void redrawCanvas(Canvas p, boolean mediumFlg){
+        // グラフィックスコンテキストを作成
+        GraphicsContext gc = p.getGraphicsContext2D();
+        // 描画指示を送る
+        gc.clearRect(0,0,800,800);
+        gc.setFill(Color.RED);
+        gc.fillOval(dragStartPointX.getValue() - 10, dragStartPointY.getValue() - 10, 20, 20);
+        gc.setFill(Color.BLUE);
+        gc.setGlobalAlpha(0.5);
+        gc.fillOval(dragMediumPointX.getValue() - 20, dragMediumPointY.getValue() - 20, 40, 40);
+        gc.setGlobalAlpha(1.0);
+    }
+
     // 各種コマンド
     /**
      * 終了コマンド
@@ -86,10 +107,12 @@ public class MainModel {
      * TaskBoard上でマウスによるドラッグの中間状態のイベント
      * @param e ドラッグイベント
      */
-    public void TaskBoardMouseDragOver(MouseDragEvent e){
+    public void TaskBoardMouseDragOver(MouseDragEvent e, Canvas p){
         // ドラッグ途中点の座標を記録する
         dragMediumPointX.setValue(e.getX());
         dragMediumPointY.setValue(e.getY());
+        //Canvasを再描画する
+        redrawCanvas(p, true);
         //
         e.consume();
     }
@@ -97,10 +120,12 @@ public class MainModel {
      * TaskBoard上でマウスによるドラッグを終了した際のイベント
      * @param e ドラッグイベント
      */
-    public void TaskBoardMouseDragReleased(MouseDragEvent e){
+    public void TaskBoardMouseDragReleased(MouseDragEvent e, Canvas p){
         // ドラッグ終了点の座標を記録する
         dragEndPointX.setValue(e.getX());
         dragEndPointY.setValue(e.getY());
+        //Canvasを再描画する
+        redrawCanvas(p, false);
         //
         e.consume();
     }
