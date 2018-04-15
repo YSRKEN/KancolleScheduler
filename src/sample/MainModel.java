@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Alert;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseDragEvent;
@@ -73,7 +74,7 @@ public class MainModel {
      * TaskBoard上でマウスによるドラッグを開始した際のイベント
      * @param e マウスイベント
      */
-    public void TaskBoardDragDetected(MouseEvent e, Pane p){
+    public void TaskBoardDragDetected(MouseEvent e, Canvas p){
         // ドラッグ開始点の座標を記録する
         dragStartPointX.setValue(e.getX());
         dragStartPointY.setValue(e.getY());

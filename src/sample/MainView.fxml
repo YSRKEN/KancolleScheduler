@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
+<?import javafx.scene.canvas.Canvas?>
 <BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainViewModel">
     <top>
         <!-- メニュー項目 -->
@@ -24,7 +25,7 @@
     <center>
         <ScrollPane BorderPane.alignment="CENTER">
          <content>
-            <Pane fx:id="TaskBoard" prefHeight="800.0" prefWidth="800.0" />
+            <Canvas fx:id="TaskBoard" height="800.0" width="800.0" />
          </content>
         </ScrollPane>
     </center>

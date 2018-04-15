@@ -2,6 +2,7 @@ package sample;
 
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
@@ -21,7 +22,7 @@ public class MainViewModel {
     /**
      * 遠征タスクを表示するためのPane
      */
-    @FXML private Pane TaskBoard;
+    @FXML private Canvas TaskBoard;
     /**
      * 情報表示用のラベル
      */
