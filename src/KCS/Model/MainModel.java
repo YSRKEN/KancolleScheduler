@@ -166,6 +166,7 @@ public class MainModel {
             // 他のタスクと重なるようには置けないし、同名遠征を別レーンで重なるように配置できないことに注意
             TaskInfo draggedTask = expTaskList.get(index);
             boolean rejectFlg = false;
+            int otherTaskIndex = -1;
             for(int i = 0; i < expTaskList.size(); ++i) {
                 // ドラッグ中のタスクと他のタスクの番号が同じ場合は飛ばす
                 if(i == index)
@@ -179,17 +180,31 @@ public class MainModel {
                 // 遠征名が被っている場合は、被っているとみなす
                 if(draggedTask.getExpInfo().getName().equals(taskInfo.getExpInfo().getName())){
                     rejectFlg = true;
+                    otherTaskIndex = i;
                     break;
                 }
                 // 遠征名が異なっていても、同一艦隊の場合は被っているとみなす
                 if(newLane == taskInfo.getLane()){
                     rejectFlg = true;
+                    otherTaskIndex = i;
                     break;
                 }
             }
             if(!rejectFlg) {
                 draggedTask.setTimePosition(newTimePosition);
                 draggedTask.setLane(newLane);
+            }else{
+                // 横方向について、ギリギリまで寄れるようにする
+                TaskInfo taskInfo = expTaskList.get(otherTaskIndex);
+                int rightDist = Math.abs(taskInfo.getEndTimePosition() - newTimePosition);
+                int leftDist = Math.abs(taskInfo.getTimePosition() - newTimePosition - draggedTask.getTimePositionwidth());
+                if(rightDist < leftDist && taskInfo.getEndTimePosition() > newTimePosition){
+                    // 「右から寄った」と仮定する
+                    draggedTask.setTimePosition(taskInfo.getEndTimePosition());
+                }else if(taskInfo.getTimePosition() < newTimePosition + draggedTask.getTimePositionwidth()){
+                    // 「左から寄った」と仮定する
+                    draggedTask.setTimePosition(taskInfo.getTimePosition() - draggedTask.getTimePositionwidth());
+                }
             }
             draggedExpTaskIndex.setValue(-1);
         }
