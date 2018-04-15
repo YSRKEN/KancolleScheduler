@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import sample.Store.DataStore;
 
 /**
  * Mainクラス
@@ -34,6 +35,7 @@ public class Main extends Application {
      * @param args コマンドライン引数
      */
     public static void main(String[] args) {
+        DataStore.initialize();
         launch(args);
     }
 }

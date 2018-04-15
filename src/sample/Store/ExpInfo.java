@@ -15,8 +15,8 @@ public class ExpInfo {
     private final String wantFleetType;
     private final int time;
     private final int getFuel, getAmmo, getSteel, getBauxite;
-    private final int getLeftBucket, getLeftBurner, getLeftGear, getLeftCoin;
-    private final int getRightBucket, getRightBurner, getRightGear, getRightCoin;
+    private final double getLeftBucket, getLeftBurner, getLeftGear, getLeftCoin;
+    private final double getRightBucket, getRightBurner, getRightGear, getRightCoin;
     private final int lostFuel, lostAmmo;
 
     /**
@@ -32,9 +32,117 @@ public class ExpInfo {
      */
     @Override public String toString(){
         StringBuilder sb = new StringBuilder();
+        // 基本情報
         sb.append(String.format("【%s】%s", areaName, name));
-        sb.append(String.format("%n旗艦Lv：%d　合計Lv：%s　最小隻数：%d", leaderLevel, (sumLevel > 0 ? Integer.toString(sumLevel) : "―"), minMemberSize));
+        // 必要な艦娘に関する情報
+        sb.append(String.format("%n旗艦Lv：%d", leaderLevel));
+        sb.append(String.format("　合計Lv：%s", (sumLevel > 0 ? Integer.toString(sumLevel) : "―")));
+        sb.append(String.format("　最小隻数：%d", minMemberSize));
         sb.append(String.format("%n必要艦種：%s　遠征時間：%d分", wantFleetType, time));
+        // 報酬資材に関する情報-1
+        sb.append(String.format("%n通常資材："));
+        {
+            int count = 0;
+            if(getFuel != 0){
+                sb.append(String.format("燃料%d", getFuel));
+                ++count;
+            }
+            if(getAmmo != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("弾薬%d", getAmmo));
+                ++count;
+            }
+            if(getSteel != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("鋼材%d", getSteel));
+                ++count;
+            }
+            if(getBauxite != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("ボーキ%d", getBauxite));
+                ++count;
+            }
+            if(count == 0)
+                sb.append("なし");
+        }
+        // 報酬資材に関する情報-2
+        sb.append(String.format("%n特殊資材(通常)："));
+        {
+            int count = 0;
+            if(getLeftBucket != 0){
+                // Javaの%g指定がアホで末尾0抑制しやがらないので、
+                // 正規表現を使って末尾0抑制をスクラッチした
+                sb.append(String.format("バケツ%f", getLeftBucket)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getLeftBurner != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("バーナー%f", getLeftBurner)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getLeftGear != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("ギア%f", getLeftGear)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getLeftCoin != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("コイン%f", getLeftCoin)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(count == 0)
+                sb.append("なし");
+        }
+        // 報酬資材に関する情報-3
+        sb.append(String.format("%n特殊資材(大成功)："));
+        {
+            int count = 0;
+            if(getRightBucket != 0){
+                sb.append(String.format("バケツ%f", getRightBucket)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getRightBurner != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("バーナー%f", getRightBurner)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getRightGear != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("ギア%f", getRightGear)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(getRightCoin != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("コイン%f", getRightCoin)
+                        .replaceAll("0+$", "").replaceAll("\\.$", ""));
+                ++count;
+            }
+            if(count == 0)
+                sb.append("なし");
+        }
+        // 消費資材に関する情報-1
+        sb.append(String.format("%n消費資材："));
+        {
+            int count = 0;
+            if(lostFuel != 0){
+                sb.append(String.format("燃料%d", lostFuel));
+                ++count;
+            }
+            if(lostAmmo != 0){
+                if(count > 0) sb.append(",");
+                sb.append(String.format("弾薬%d", lostAmmo));
+                ++count;
+            }
+            if(count == 0)
+                sb.append("なし");
+        }
         return sb.toString();
     }
 
@@ -66,9 +174,9 @@ public class ExpInfo {
      */
     public ExpInfo(int no, String areaName, int position, String name, int leaderLevel,
                    int sumLevel, int minMemberSize, String wantFleetType, int time,
-                   int getFuel, int getAmmo, int getSteel, int getBauxite, int getLeftBucket,
-                   int getLeftBurner, int getLeftGear, int getLeftCoin, int getRightBucket,
-                   int getRightBurner, int getRightGear, int getRightCoin, int lostFuel, int lostAmmo) {
+                   int getFuel, int getAmmo, int getSteel, int getBauxite, double getLeftBucket,
+                   double getLeftBurner, double getLeftGear, double getLeftCoin, double getRightBucket,
+                   double getRightBurner, double getRightGear, double getRightCoin, int lostFuel, int lostAmmo) {
         this.no = no;
         this.areaName = areaName;
         this.position = position;
