@@ -1,4 +1,4 @@
-package sample;
+package sample.Model;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -13,6 +13,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import sample.Lib.Utility;
 
 /**
  * MainViewと接続されるModel
@@ -22,25 +23,25 @@ public class MainModel {
     /**
      * 情報表示用のテキスト
      */
-    private ObjectProperty<String> statusMessage = new SimpleObjectProperty<>();
-    public ReadOnlyObjectProperty<String> StatusMessage = statusMessage;
+    private final ObjectProperty<String> statusMessage = new SimpleObjectProperty<>();
+    public final ReadOnlyObjectProperty<String> StatusMessage = statusMessage;
 
     // privateなプロパティ
     /**
      * ドラッグ開始点
      */
-    private ObjectProperty<Double> dragStartPointX = new SimpleObjectProperty<>(0.0);
-    private ObjectProperty<Double> dragStartPointY = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragStartPointX = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragStartPointY = new SimpleObjectProperty<>(0.0);
     /**
      * ドラッグ途中点
      */
-    private ObjectProperty<Double> dragMediumPointX = new SimpleObjectProperty<>(0.0);
-    private ObjectProperty<Double> dragMediumPointY = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragMediumPointX = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragMediumPointY = new SimpleObjectProperty<>(0.0);
     /**
      * ドラッグ終了点
      */
-    private ObjectProperty<Double> dragEndPointX = new SimpleObjectProperty<>(0.0);
-    private ObjectProperty<Double> dragEndPointY = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragEndPointX = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Double> dragEndPointY = new SimpleObjectProperty<>(0.0);
 
     // privateな処理
     /**
