@@ -159,9 +159,9 @@ public class MainModel {
         // ドラッグを終了したので、放したタスクブロックの位置を再計算する
         if(draggedExpTaskIndex.getValue() != -1){
             int index = draggedExpTaskIndex.getValue();
-            int newX = (int)(dragEndPointX.getValue() + draggedExpTaskOffsetX.getValue());
-            int newY = (int)(dragEndPointY.getValue() + draggedExpTaskOffsetY.getValue());
-            int newTimePosition = Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
+            double newX = dragEndPointX.getValue() + draggedExpTaskOffsetX.getValue();
+            double newY = dragEndPointY.getValue() + draggedExpTaskOffsetY.getValue();
+            int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
             int newLane = (int)Math.round((newY + Utility.TASK_PIECE_HEIGHT / 2 - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
             // 他のタスクと重なるようには置けないし、同名遠征を別レーンで重なるように配置できないことに注意
             TaskInfo draggedTask = expTaskList.get(index);
@@ -240,10 +240,10 @@ public class MainModel {
         gc.setStroke(Color.BLACK);
         for(int i = 0; i < expTaskList.size(); ++i){
             TaskInfo taskInfo  =expTaskList.get(i);
-            int x = taskInfo.getX();
-            int y = taskInfo.getY();
-            int w = taskInfo.getW();
-            int h = taskInfo.getH();
+            double x = taskInfo.getX();
+            double y = taskInfo.getY();
+            double w = taskInfo.getW();
+            double h = taskInfo.getH();
             if(i == draggedExpTaskIndex.getValue()){
                 continue;
             }else if(i == selectedExpTaskIndex.getValue()){
@@ -260,8 +260,8 @@ public class MainModel {
             TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex.getValue());
             double x = dragMediumPointX.getValue() + draggedExpTaskOffsetX.getValue();
             double y = dragMediumPointY.getValue() + draggedExpTaskOffsetY.getValue();
-            int w = taskInfo.getW();
-            int h = taskInfo.getH();
+            double w = taskInfo.getW();
+            double h = taskInfo.getH();
             gc.setFill(Color.GREEN);
             gc.setGlobalAlpha(0.5);
             gc.fillRect(x, y, w, h);

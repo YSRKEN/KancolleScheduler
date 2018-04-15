@@ -21,11 +21,11 @@ public class Utility {
     /**
      * 1つの時間間隔における横ピクセル数
      */
-    public static final int TASK_PIECE_WIDTH = 5;
+    public static final double TASK_PIECE_WIDTH = 5;
     /**
      * 1つの時間間隔における縦ピクセル数
      */
-    public static final int TASK_PIECE_HEIGHT = 100;
+    public static final double TASK_PIECE_HEIGHT = 100;
     /**
      * 遠征に出撃できる最大艦隊数
      */
@@ -37,27 +37,27 @@ public class Utility {
     /**
      * TaskBoardの横幅
      */
-    public static final int TASK_BOARD_WIDTH = TASK_PIECE_WIDTH * TASK_PIECE_SIZE;
+    public static final double TASK_BOARD_WIDTH = TASK_PIECE_WIDTH * TASK_PIECE_SIZE;
     /**
      * TaskBoardの縦幅
      */
-    public static final int TASK_BOARD_HEIGHT = TASK_PIECE_HEIGHT * LANES;
+    public static final double TASK_BOARD_HEIGHT = TASK_PIECE_HEIGHT * LANES;
     /**
      * 時刻表示をするためのスペース
      */
-    public static final int ADD_TASK_BOARD_HEIGHT = 24;
+    public static final double ADD_TASK_BOARD_HEIGHT = 24;
     /**
      * 周囲へのマージン
      */
-    public static final int TASK_BOARD_MARGIN = 20;
+    public static final double TASK_BOARD_MARGIN = 20;
     /**
      * Canvasの横幅
      */
-    public static final int CANVAS_WIDTH = TASK_BOARD_WIDTH + TASK_BOARD_MARGIN * 2;
+    public static final double CANVAS_WIDTH = TASK_BOARD_WIDTH + TASK_BOARD_MARGIN * 2;
     /**
      * Canvasの縦幅
      */
-    public static final int CANVAS_HEIGHT = TASK_BOARD_HEIGHT + ADD_TASK_BOARD_HEIGHT + TASK_BOARD_MARGIN * 2;
+    public static final double CANVAS_HEIGHT = TASK_BOARD_HEIGHT + ADD_TASK_BOARD_HEIGHT + TASK_BOARD_MARGIN * 2;
 
     /**
      * ダイアログを表示
