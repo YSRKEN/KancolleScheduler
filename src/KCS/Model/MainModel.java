@@ -1,5 +1,6 @@
 package KCS.Model;
 
+import KCS.Store.DataStore;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -10,7 +11,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import KCS.Lib.Utility;
+import KCS.Library.Utility;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MainViewと接続されるModel
@@ -40,6 +44,9 @@ public class MainModel {
     private final ObjectProperty<Double> dragEndPointX = new SimpleObjectProperty<>(0.0);
     private final ObjectProperty<Double> dragEndPointY = new SimpleObjectProperty<>(0.0);
 
+    // privateなフィールド
+    private List<TaskInfo> expTaskList = new ArrayList<>();
+
     // privateな処理
     /**
      * 情報表示用のテキストを変更する
@@ -55,24 +62,6 @@ public class MainModel {
                         Math.round(dragEndPointY.getValue())
                 )
         ));
-    }
-
-    /**
-     * TaskBoardを再描画する
-     * @param p TaskBoard
-     * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
-     */
-    private void redrawCanvas(Canvas p, boolean mediumFlg){
-        // グラフィックスコンテキストを作成
-        GraphicsContext gc = p.getGraphicsContext2D();
-        // 描画指示を送る
-        gc.clearRect(0,0,800,800);
-        gc.setFill(Color.RED);
-        gc.fillOval(dragStartPointX.getValue() - 10, dragStartPointY.getValue() - 10, 20, 20);
-        gc.setFill(Color.BLUE);
-        gc.setGlobalAlpha(0.5);
-        gc.fillOval(dragMediumPointX.getValue() - 20, dragMediumPointY.getValue() - 20, 40, 40);
-        gc.setGlobalAlpha(1.0);
     }
 
     // 各種コマンド
@@ -110,7 +99,7 @@ public class MainModel {
         dragMediumPointX.setValue(e.getX());
         dragMediumPointY.setValue(e.getY());
         //Canvasを再描画する
-        redrawCanvas(p, true);
+        RedrawCanvasCommand(p, true);
         //
         e.consume();
     }
@@ -123,9 +112,46 @@ public class MainModel {
         dragEndPointX.setValue(e.getX());
         dragEndPointY.setValue(e.getY());
         //Canvasを再描画する
-        redrawCanvas(p, false);
+        RedrawCanvasCommand(p, false);
         //
         e.consume();
+    }
+    /**
+     * TaskBoardを再描画する
+     * @param p TaskBoard
+     * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
+     */
+    public void RedrawCanvasCommand(Canvas p, boolean mediumFlg){
+        // グラフィックスコンテキストを作成
+        GraphicsContext gc = p.getGraphicsContext2D();
+        // 画面を一旦削除
+        gc.clearRect(0,0,Utility.TASK_BOARD_WIDTH,Utility.TASK_BOARD_HEIGHT);
+        // 格子を表示する
+        gc.setStroke(Color.GRAY);
+        for(int row = 0; row <= Utility.LANES; ++row){
+            gc.strokeLine(0, row * Utility.TASK_PIECE_HEIGHT, Utility.TASK_BOARD_WIDTH, row * Utility.TASK_PIECE_HEIGHT);
+        }
+        for(int column = 0; column <= Utility.TASK_PIECE_SIZE; column += 60 / Utility.MIN_TASK_PIECE_TIME){
+            gc.strokeLine(column * Utility.TASK_PIECE_WIDTH, 0, column * Utility.TASK_PIECE_WIDTH, Utility.TASK_BOARD_HEIGHT);
+        }
+        // 既存のタスクを表示する
+        gc.setFill(Color.LIGHTSKYBLUE);
+        gc.setStroke(Color.BLACK);
+        for(TaskInfo taskInfo : expTaskList){
+            int x = taskInfo.getTimePosition() * Utility.TASK_PIECE_WIDTH;
+            int y = taskInfo.getLane() * Utility.TASK_PIECE_HEIGHT;
+            int w = taskInfo.getExpInfo().getTime() / Utility.MIN_TASK_PIECE_TIME * Utility.TASK_PIECE_WIDTH;
+            int h = Utility.TASK_PIECE_HEIGHT;
+            gc.fillRect(x, y, w, h);
+            gc.strokeRect(x, y, w, h);
+        }
+        //
+        gc.setFill(Color.RED);
+        gc.fillOval(dragStartPointX.getValue() - 10, dragStartPointY.getValue() - 10, 20, 20);
+        gc.setFill(Color.BLUE);
+        gc.setGlobalAlpha(0.5);
+        gc.fillOval(dragMediumPointX.getValue() - 20, dragMediumPointY.getValue() - 20, 40, 40);
+        gc.setGlobalAlpha(1.0);
     }
 
     /**
@@ -139,5 +165,9 @@ public class MainModel {
         dragMediumPointY.addListener((b,o,n)->redrawStatusMessage());
         dragEndPointX.addListener((b,o,n)->redrawStatusMessage());
         dragEndPointY.addListener((b,o,n)->redrawStatusMessage());
+        // テスト
+        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 0, 5));
+        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 1, 30));
+        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("長距離練習航海"), 0, 30));
     }
 }

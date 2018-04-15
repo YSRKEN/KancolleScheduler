@@ -1,5 +1,6 @@
 package KCS.ViewModel;
 
+import KCS.Library.Utility;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
@@ -36,6 +37,9 @@ public class MainViewModel {
      * ViewModelを初期化
      */
     @FXML private void initialize(){
+        // コントロールの大きさを直接指定
+        TaskBoard.setWidth(Utility.TASK_BOARD_WIDTH);
+        TaskBoard.setHeight(Utility.TASK_BOARD_HEIGHT);
         // プロパティのバインディング
         StatusMessage.textProperty().bind(mainModel.StatusMessage);
         // コマンドのバインディング
@@ -44,5 +48,7 @@ public class MainViewModel {
         TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e, this.TaskBoard));
         TaskBoard.setOnMouseDragOver(e -> mainModel.TaskBoardMouseDragOver(e, this.TaskBoard));
         TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e, this.TaskBoard));
+        // テスト
+        mainModel.RedrawCanvasCommand(TaskBoard, false);
     }
 }

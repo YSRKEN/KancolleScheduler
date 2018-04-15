@@ -145,7 +145,6 @@ public class ExpInfo {
         }
         return sb.toString();
     }
-
     /**
      * コンストラクタ
      * @param no 遠征番号
@@ -201,4 +200,6 @@ public class ExpInfo {
         this.lostFuel = lostFuel;
         this.lostAmmo = lostAmmo;
     }
+    public String getName(){ return name; }
+    public int getTime(){ return time; }
 }

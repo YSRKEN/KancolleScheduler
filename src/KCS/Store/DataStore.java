@@ -4,11 +4,15 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * データストア(遠征情報などを記録しておく)
  */
 public class DataStore {
+    /**
+     * 遠征情報の一覧
+     */
     public static final List<ExpInfo> ExpList = new ArrayList<ExpInfo>();
 
     /**
@@ -67,5 +71,14 @@ public class DataStore {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 遠征情報を遠征名から取得する
+     * @param name 遠征名
+     * @return 遠征情報
+     */
+    public static ExpInfo GetExpInfoFromName(String name){
+        return ExpList.stream().filter(e -> e.getName().equals(name)).findFirst().get();
     }
 }
