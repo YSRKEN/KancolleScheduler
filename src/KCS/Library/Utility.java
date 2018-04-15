@@ -59,7 +59,6 @@ public class Utility {
      */
     public static final int CANVAS_HEIGHT = TASK_BOARD_HEIGHT + ADD_TASK_BOARD_HEIGHT + TASK_BOARD_MARGIN * 2;
 
-
     /**
      * ダイアログを表示
      * @param contentText 本文

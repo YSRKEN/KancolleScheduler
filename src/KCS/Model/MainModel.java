@@ -13,6 +13,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import KCS.Library.Utility;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import sun.awt.FontDescriptor;
+import sun.font.FontFamily;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +47,17 @@ public class MainModel {
      */
     private final ObjectProperty<Double> dragEndPointX = new SimpleObjectProperty<>(0.0);
     private final ObjectProperty<Double> dragEndPointY = new SimpleObjectProperty<>(0.0);
+    private final ObjectProperty<Integer> selectedExpTaskIndex = new SimpleObjectProperty<>(-1);
 
     // privateなフィールド
+    /**
+     * 遠征のタスクブロック一覧
+     */
     private List<TaskInfo> expTaskList = new ArrayList<>();
+    /**
+     * Canvasを処理するため止むなく引っ張るポインタ
+     */
+    private Canvas taskBoard;
 
     // privateな処理
     /**
@@ -83,24 +94,24 @@ public class MainModel {
      * TaskBoard上でマウスによるドラッグを開始した際のイベント
      * @param e マウスイベント
      */
-    public void TaskBoardDragDetected(MouseEvent e, Canvas p){
+    public void TaskBoardDragDetected(MouseEvent e){
         // ドラッグ開始点の座標を記録する
         dragStartPointX.setValue(e.getX());
         dragStartPointY.setValue(e.getY());
         // ドラッグイベントを許可する
-        p.startFullDrag();
+        taskBoard.startFullDrag();
         e.consume();
     }
     /**
      * TaskBoard上でマウスによるドラッグの中間状態のイベント
      * @param e ドラッグイベント
      */
-    public void TaskBoardMouseDragOver(MouseDragEvent e, Canvas p){
+    public void TaskBoardMouseDragOver(MouseDragEvent e){
         // ドラッグ途中点の座標を記録する
         dragMediumPointX.setValue(e.getX());
         dragMediumPointY.setValue(e.getY());
         //Canvasを再描画する
-        RedrawCanvasCommand(p, true);
+        RedrawCanvasCommand(true);
         //
         e.consume();
     }
@@ -108,23 +119,36 @@ public class MainModel {
      * TaskBoard上でマウスによるドラッグを終了した際のイベント
      * @param e ドラッグイベント
      */
-    public void TaskBoardMouseDragReleased(MouseDragEvent e, Canvas p){
+    public void TaskBoardMouseDragReleased(MouseDragEvent e){
         // ドラッグ終了点の座標を記録する
         dragEndPointX.setValue(e.getX());
         dragEndPointY.setValue(e.getY());
         //Canvasを再描画する
-        RedrawCanvasCommand(p, false);
+        RedrawCanvasCommand(false);
         //
         e.consume();
     }
+    public void TaskBoardMouseClicked(MouseEvent e){
+        // クリックした座標が、いずれかのタスクの上かを調べる
+        double mouseX = e.getX();
+        double mouseY = e.getY();
+        for(int i = 0; i < expTaskList.size(); ++i) {
+            TaskInfo taskInfo = expTaskList.get(i);
+            if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW()
+                    && taskInfo.getY() <= mouseY && mouseY <= taskInfo.getY() + taskInfo.getH()){
+                selectedExpTaskIndex.setValue(i);
+                return;
+            }
+        }
+        selectedExpTaskIndex.setValue(-1);
+    }
     /**
      * TaskBoardを再描画する
-     * @param p TaskBoard
      * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
      */
-    public void RedrawCanvasCommand(Canvas p, boolean mediumFlg){
+    public void RedrawCanvasCommand(boolean mediumFlg){
         // グラフィックスコンテキストを作成
-        GraphicsContext gc = p.getGraphicsContext2D();
+        GraphicsContext gc = taskBoard.getGraphicsContext2D();
         // 画面を一旦削除
         gc.clearRect(0,0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
@@ -154,15 +178,39 @@ public class MainModel {
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
         }
         // 既存のタスクを表示する
-        gc.setFill(Color.LIGHTSKYBLUE);
         gc.setStroke(Color.BLACK);
-        for(TaskInfo taskInfo : expTaskList){
-            int x = Utility.TASK_BOARD_MARGIN + taskInfo.getTimePosition() * Utility.TASK_PIECE_WIDTH;
-            int y = Utility.TASK_BOARD_MARGIN + taskInfo.getLane() * Utility.TASK_PIECE_HEIGHT;
-            int w = taskInfo.getExpInfo().getTime() / Utility.MIN_TASK_PIECE_TIME * Utility.TASK_PIECE_WIDTH;
-            int h = Utility.TASK_PIECE_HEIGHT;
+        for(int i = 0; i < expTaskList.size(); ++i){
+            TaskInfo taskInfo  =expTaskList.get(i);
+            int x = taskInfo.getX();
+            int y = taskInfo.getY();
+            int w = taskInfo.getW();
+            int h = taskInfo.getH();
+            if(i == selectedExpTaskIndex.getValue()){
+                gc.setFill(Color.ORANGE);
+            }else {
+                gc.setFill(Color.LIGHTSKYBLUE);
+            }
             gc.fillRect(x, y, w, h);
             gc.strokeRect(x, y, w, h);
+        }
+        // 選択されているタスクの情報を表示する
+        if(selectedExpTaskIndex.getValue() != -1){
+            // 選択されているタスク
+            TaskInfo taskInfo = expTaskList.get(selectedExpTaskIndex.getValue());
+            // タスクの開始時刻を時：分形式に変換
+            int allMinute = taskInfo.getTimePosition() * Utility.MIN_TASK_PIECE_TIME;
+            int hour = ((allMinute / 60) + 5) % 24;
+            int minute = allMinute % 60;
+            // 結果を表示
+            Platform.runLater(() -> statusMessage.setValue(
+                    String.format(
+                            "%s(第%d艦隊,%d:%d)",
+                            taskInfo.getExpInfo().getName(),
+                            taskInfo.getLane() + 1,
+                            hour,
+                            minute
+                    )
+            ));
         }
         //
         gc.setFill(Color.RED);
@@ -176,7 +224,8 @@ public class MainModel {
     /**
      * コンストラクタ
      */
-    public MainModel(){
+    public MainModel(Canvas taskBoard){
+        this.taskBoard = taskBoard;
         // マウスドラッグによるイベント処理
         dragStartPointX.addListener((b,o,n)->redrawStatusMessage());
         dragStartPointY.addListener((b,o,n)->redrawStatusMessage());
@@ -184,6 +233,8 @@ public class MainModel {
         dragMediumPointY.addListener((b,o,n)->redrawStatusMessage());
         dragEndPointX.addListener((b,o,n)->redrawStatusMessage());
         dragEndPointY.addListener((b,o,n)->redrawStatusMessage());
+        // その他の行動によるイベント処理
+        selectedExpTaskIndex.addListener((b,o,n)->RedrawCanvasCommand(false));
         // テスト
         expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 0, 5));
         expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 1, 30));

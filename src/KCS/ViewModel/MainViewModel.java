@@ -31,12 +31,13 @@ public class MainViewModel {
     /**
      * MainViewと接続するモデル
      */
-    private MainModel mainModel = new MainModel();
+    private MainModel mainModel;
 
     /**
      * ViewModelを初期化
      */
     @FXML private void initialize(){
+        mainModel = new MainModel(TaskBoard);
         // コントロールの大きさを直接指定
         TaskBoard.setWidth(Utility.CANVAS_WIDTH);
         TaskBoard.setHeight(Utility.CANVAS_HEIGHT);
@@ -45,10 +46,11 @@ public class MainViewModel {
         // コマンドのバインディング
         ExitMenu.setOnAction(e -> mainModel.ExitCommand());
         AboutMenu.setOnAction(e -> mainModel.ShowVersionInfoCommand());
-        TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e, this.TaskBoard));
-        TaskBoard.setOnMouseDragOver(e -> mainModel.TaskBoardMouseDragOver(e, this.TaskBoard));
-        TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e, this.TaskBoard));
+        TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e));
+        TaskBoard.setOnMouseDragOver(e -> mainModel.TaskBoardMouseDragOver(e));
+        TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e));
+        TaskBoard.setOnMouseClicked(e -> mainModel.TaskBoardMouseClicked(e));
         // テスト
-        mainModel.RedrawCanvasCommand(TaskBoard, false);
+        mainModel.RedrawCanvasCommand(false);
     }
 }

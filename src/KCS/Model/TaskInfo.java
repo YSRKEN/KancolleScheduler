@@ -1,5 +1,6 @@
 package KCS.Model;
 
+import KCS.Library.Utility;
 import KCS.Store.ExpInfo;
 
 /**
@@ -37,6 +38,26 @@ public class TaskInfo {
      * @return タイミング
      */
     public int getTimePosition() { return timePosition; }
+    /**
+     * タスクブロックにした際の横位置
+     * @return 横位置
+     */
+    public int getX(){ return Utility.TASK_BOARD_MARGIN + timePosition * Utility.TASK_PIECE_WIDTH; }
+    /**
+     * タスクブロックにした際の縦位置
+     * @return 縦位置
+     */
+    public int getY(){ return Utility.TASK_BOARD_MARGIN + lane * Utility.TASK_PIECE_HEIGHT; }
+    /**
+     * タスクブロックにした際の横幅
+     * @return 横幅
+     */
+    public int getW(){ return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME * Utility.TASK_PIECE_WIDTH; }
+    /**
+     * タスクブロックにした際の縦幅
+     * @return 縦幅
+     */
+    public int getH(){ return Utility.TASK_PIECE_HEIGHT; }
 
     /**
      * コンストラクタ
