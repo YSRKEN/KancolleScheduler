@@ -186,8 +186,10 @@ public class MainModel {
                 break;
             }
             // タスクブロックの位置丸め
-            int timePosition = draggedTask.getTimePosition();
-            draggedTask.setTimePosition(timePosition < 0 ? 0 : timePosition >= Utility.TASK_PIECE_SIZE ? Utility.TASK_PIECE_SIZE - 1 : timePosition);
+            if(draggedTask.getTimePosition() < 0)
+                draggedTask.setTimePosition(0);
+            if(draggedTask.getEndTimePosition() >= Utility.TASK_PIECE_SIZE)
+                draggedTask.setTimePosition(Utility.TASK_PIECE_SIZE - draggedTask.getTimePositionwidth());
             int lane = draggedTask.getLane();
             draggedTask.setLane(lane < 0 ? 0 : lane >= Utility.LANES ? Utility.LANES - 1 : lane);
             // 当該タスクブロックのドラッグ状態を解除
