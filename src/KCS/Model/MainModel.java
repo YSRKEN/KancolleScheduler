@@ -20,6 +20,7 @@ import sun.font.FontFamily;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * MainViewと接続されるModel
@@ -93,14 +94,14 @@ public class MainModel {
      * @return タスクのインデックス(非選択なら-1)
      */
     private int getTaskBlockIndex(double mouseX, double mouseY){
-        for(int i = 0; i < expTaskList.size(); ++i) {
+        return IntStream.range(0, expTaskList.size()).filter(i -> {
             TaskInfo taskInfo = expTaskList.get(i);
             if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW()
                     && taskInfo.getY() <= mouseY && mouseY <= taskInfo.getY() + taskInfo.getH()){
-                return i;
+                return true;
             }
-        }
-        return -1;
+            return false;
+        }).findFirst().orElse(-1);
     }
 
     // 各種コマンド
@@ -242,48 +243,48 @@ public class MainModel {
         gc.clearRect(0,0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
         gc.setStroke(Color.GRAY);
-        for(int row = 0; row <= Utility.LANES; ++row){
+        IntStream.range(0, Utility.LANES + 1).forEach(row -> {
             gc.strokeLine(
                     Utility.TASK_BOARD_MARGIN,
                     Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH,
                     Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT);
-        }
-        for(int column = 0; column <= Utility.TASK_PIECE_SIZE; column += Utility.TASK_PIECE_PER_HOUR){
+        });
+        IntStream.range(0, Utility.HOUR_PER_DAY + 1).forEach(column -> {
             gc.strokeLine(
-                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_PER_HOUR * Utility.TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN,
-                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_WIDTH,
+                    Utility.TASK_BOARD_MARGIN + column * Utility.TASK_PIECE_PER_HOUR * Utility.TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT);
-        }
+        });
         // 時刻を表示する
         gc.setFont(Font.font(16));
         gc.setFill(Color.BLACK);
-        for(int hour = Utility.TASK_BOARD_FIRST_HOUR; hour <= Utility.TASK_BOARD_FIRST_HOUR + Utility.HOUR_PER_DAY; ++hour){
+        IntStream.range(Utility.TASK_BOARD_FIRST_HOUR, Utility.TASK_BOARD_FIRST_HOUR + Utility.HOUR_PER_DAY + 1).forEach(hour -> {
             int hour2 = hour % Utility.HOUR_PER_DAY;
             gc.fillText(
                     String.format("%d:00", hour2),
                     Utility.TASK_BOARD_MARGIN + (hour - Utility.TASK_BOARD_FIRST_HOUR) * Utility.TASK_PIECE_WIDTH * Utility.TASK_PIECE_PER_HOUR - 16,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
-        }
+        });
         // 既存のタスクを表示する(ドラッグ中のものは除く)
         gc.setStroke(Color.BLACK);
-        for(int i = 0; i < expTaskList.size(); ++i){
-            TaskInfo taskInfo  =expTaskList.get(i);
-            double x = taskInfo.getX();
-            double y = taskInfo.getY();
-            double w = taskInfo.getW();
-            double h = taskInfo.getH();
-            if(i == draggedExpTaskIndex.getValue()){
-                continue;
-            }else if(i == selectedExpTaskIndex.getValue()){
-                gc.setFill(Color.ORANGE);
-            }else {
-                gc.setFill(Color.LIGHTSKYBLUE);
-            }
-            gc.fillRect(x, y, w, h);
-            gc.strokeRect(x, y, w, h);
-        }
+        IntStream.range(0, expTaskList.size())
+            .filter(i -> i != draggedExpTaskIndex.getValue())
+            .forEach(i -> {
+                TaskInfo taskInfo  =expTaskList.get(i);
+                double x = taskInfo.getX();
+                double y = taskInfo.getY();
+                double w = taskInfo.getW();
+                double h = taskInfo.getH();
+                if(i == selectedExpTaskIndex.getValue()){
+                    gc.setFill(Color.ORANGE);
+                }else {
+                    gc.setFill(Color.LIGHTSKYBLUE);
+                }
+                gc.fillRect(x, y, w, h);
+                gc.strokeRect(x, y, w, h);
+        });
         // ドラッグ中のタスクを表示する
         if(draggedExpTaskIndex.getValue() != -1){
             // 選択されているタスク
