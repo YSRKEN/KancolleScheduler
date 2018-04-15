@@ -1,10 +1,10 @@
-package sample.ViewModel;
+package KCS.ViewModel;
 
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
-import sample.Model.MainModel;
+import KCS.Model.MainModel;
 
 /**
  * MainViewとMainModelとを接続するViewModel

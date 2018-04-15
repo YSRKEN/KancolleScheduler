@@ -1,4 +1,4 @@
-package sample.Store;
+package KCS.Store;
 
 /**
  * 遠征情報を表すクラス

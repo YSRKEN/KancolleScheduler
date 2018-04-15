@@ -1,4 +1,4 @@
-package sample.Model;
+package KCS.Model;
 
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -10,7 +10,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import sample.Lib.Utility;
+import KCS.Lib.Utility;
 
 /**
  * MainViewと接続されるModel

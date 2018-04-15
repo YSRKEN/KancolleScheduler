@@ -1,11 +1,11 @@
-package sample;
+package KCS;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import sample.Store.DataStore;
+import KCS.Store.DataStore;
 
 /**
  * Mainクラス

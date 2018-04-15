@@ -1,6 +1,4 @@
-package sample.Store;
-
-import sample.Lib.Utility;
+package KCS.Store;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -20,7 +18,7 @@ public class DataStore {
         // ExpList.csvを読み込み、遠征情報一覧のデータを記憶する
         File file = null;
         try {
-            file = new File(ClassLoader.getSystemResource("sample/File/ExpList.csv").toURI());
+            file = new File(ClassLoader.getSystemResource("KCS/File/ExpList.csv").toURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return;
@@ -69,6 +67,5 @@ public class DataStore {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return;
     }
 }

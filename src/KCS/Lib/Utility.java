@@ -1,4 +1,4 @@
-package sample.Lib;
+package KCS.Lib;
 
 import javafx.scene.control.Alert;
 
