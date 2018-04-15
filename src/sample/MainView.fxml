@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.121" fx:controller="sample.MainViewModel">
+<BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.MainViewModel">
     <top>
         <!-- メニュー項目 -->
         <MenuBar>
@@ -22,8 +24,14 @@
     <center>
         <ScrollPane BorderPane.alignment="CENTER">
          <content>
-            <Pane prefHeight="800.0" prefWidth="800.0" />
+            <Pane fx:id="TaskBoard" prefHeight="800.0" prefWidth="800.0" />
          </content>
         </ScrollPane>
     </center>
+    <bottom>
+        <Label fx:id="StatusMessage" prefHeight="36.0" BorderPane.alignment="CENTER">
+         <font>
+            <Font size="24.0" />
+         </font></Label>
+    </bottom>
 </BorderPane>
