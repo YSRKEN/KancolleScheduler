@@ -25,11 +25,6 @@ public class TaskInfo {
     private int timePosition;
 
     /**
-     * タスクに割り当てられている遠征の情報を返す
-     * @return 遠征情報
-     */
-    public ExpInfo getExpInfo() { return expInfo; }
-    /**
      * 第n艦隊かを返す
      * @return 第2艦隊→0、第3艦隊→1、第4艦隊→2
      */
@@ -87,6 +82,11 @@ public class TaskInfo {
      * @return 縦幅
      */
     public double getH(){ return Utility.TASK_PIECE_HEIGHT; }
+    /**
+     * 遠征名を取得する
+     * @return 遠征名
+     */
+    public String getName() { return expInfo.getName(); }
 
     /**
      * コンストラクタ

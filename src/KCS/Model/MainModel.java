@@ -19,6 +19,7 @@ import sun.font.FontFamily;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * MainViewと接続されるModel
@@ -158,54 +159,64 @@ public class MainModel {
         dragEndPointY.setValue(e.getY());
         // ドラッグを終了したので、放したタスクブロックの位置を再計算する
         if(draggedExpTaskIndex.getValue() != -1){
+            // 当該タスクブロックのインデックス
             int index = draggedExpTaskIndex.getValue();
+            // 当該タスクブロックの情報
+            TaskInfo draggedTask = expTaskList.get(index);
+            // 当該タスクブロックの左上位置
             double newX = dragEndPointX.getValue() + draggedExpTaskOffsetX.getValue();
             double newY = dragEndPointY.getValue() + draggedExpTaskOffsetY.getValue();
+            // 当該タスクブロックのタイミングおよび終了タイミングおよび艦隊番号
             int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
+            int newEndtimePosition = newTimePosition + draggedTask.getTimePositionwidth();
             int newLane = (int)Math.round((newY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
-            // 他のタスクと重なるようには置けないし、同名遠征を別レーンで重なるように配置できないことに注意
-            TaskInfo draggedTask = expTaskList.get(index);
-            boolean rejectFlg = false;
-            int otherTaskIndex = -1;
-            for(int i = 0; i < expTaskList.size(); ++i) {
-                // ドラッグ中のタスクと他のタスクの番号が同じ場合は飛ばす
-                if(i == index)
-                    continue;
-                // 横方向に見て、ドラッグ中のタスクと他のタスクが重なっていなければ飛ばす
-                TaskInfo taskInfo = expTaskList.get(i);
+            // 他のどのタスクブロックと干渉しているかを算出
+            List<TaskInfo> interferenceList = expTaskList.stream().filter(taskInfo -> {
+                // 同一のタスクは飛ばす
+                if (draggedTask.getX() == taskInfo.getX() && draggedTask.getY() == taskInfo.getY())
+                    return false;
+                // 横方向について重なっていなければ飛ばす
                 if(taskInfo.getEndTimePosition() <= newTimePosition)
-                    continue;
-                if(taskInfo.getTimePosition() >= newTimePosition + draggedTask.getTimePositionwidth())
-                    continue;
-                // 遠征名が被っている場合は、被っているとみなす
-                if(draggedTask.getExpInfo().getName().equals(taskInfo.getExpInfo().getName())){
-                    rejectFlg = true;
-                    otherTaskIndex = i;
-                    break;
-                }
-                // 遠征名が異なっていても、同一艦隊の場合は被っているとみなす
-                if(newLane == taskInfo.getLane()){
-                    rejectFlg = true;
-                    otherTaskIndex = i;
-                    break;
-                }
-            }
-            if(!rejectFlg) {
+                    return false;
+                if(taskInfo.getTimePosition() >= newEndtimePosition)
+                    return false;
+                // 遠征名が被っている場合はアウト
+                if(draggedTask.getName().equals(taskInfo.getName()))
+                    return true;
+                // 同一艦隊の場合はアウト
+                if(newLane == taskInfo.getLane())
+                    return true;
+                return false;
+            }).collect(Collectors.toList());
+            // 何も干渉してない場合はそれでOK
+            // 1つだけ干渉している場合はそれと被らないように移動
+            // 2つ以上干渉している場合は移動させない
+            switch (interferenceList.size()){
+            case 0:
                 draggedTask.setTimePosition(newTimePosition);
                 draggedTask.setLane(newLane);
-            }else{
+                break;
+            case 1:
+            {
                 // 横方向について、ギリギリまで寄れるようにする
-                TaskInfo taskInfo = expTaskList.get(otherTaskIndex);
+                //右の距離と左の距離とを測定する
+                TaskInfo taskInfo = interferenceList.get(0);
                 int rightDist = Math.abs(taskInfo.getEndTimePosition() - newTimePosition);
-                int leftDist = Math.abs(taskInfo.getTimePosition() - newTimePosition - draggedTask.getTimePositionwidth());
+                int leftDist = Math.abs(taskInfo.getTimePosition() - newEndtimePosition);
+                // より近い方に寄せる
                 if(rightDist < leftDist && taskInfo.getEndTimePosition() > newTimePosition){
                     // 「右から寄った」と仮定する
                     draggedTask.setTimePosition(taskInfo.getEndTimePosition());
-                }else if(taskInfo.getTimePosition() < newTimePosition + draggedTask.getTimePositionwidth()){
+                }else if(taskInfo.getTimePosition() < newEndtimePosition){
                     // 「左から寄った」と仮定する
                     draggedTask.setTimePosition(taskInfo.getTimePosition() - draggedTask.getTimePositionwidth());
                 }
             }
+                break;
+            default:
+                break;
+            }
+            // 当該タスクブロックのドラッグ状態を解除
             draggedExpTaskIndex.setValue(-1);
         }
         //Canvasを再描画する
@@ -298,7 +309,7 @@ public class MainModel {
             Platform.runLater(() -> statusMessage.setValue(
                     String.format(
                             "%s(第%d艦隊,%d:%d)",
-                            taskInfo.getExpInfo().getName(),
+                            taskInfo.getName(),
                             taskInfo.getLane() + 1,
                             hour,
                             minute
