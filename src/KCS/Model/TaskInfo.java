@@ -11,6 +11,7 @@ public class TaskInfo {
      * タスクに割り当てられている遠征の情報
      */
     private ExpInfo expInfo;
+
     /**
      * 第何艦隊に割り当てられているか<br>
      * 第2艦隊→0、第3艦隊→1、第4艦隊→2
@@ -38,6 +39,35 @@ public class TaskInfo {
      * @return タイミング
      */
     public int getTimePosition() { return timePosition; }
+    /**
+     * 終了タイミングを返す
+     * @return 終了タイミング
+     */
+    public int getEndTimePosition(){
+        return timePosition + getTimePositionwidth();
+    }
+
+    /**
+     * 遠征の期間をTaskPiece単位で返す
+     * @return 遠征の期間
+     */
+    public int getTimePositionwidth(){
+        return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME;
+    }
+    /**
+     * 第n艦隊かをセットする
+     * @param lane 第2艦隊→0、第3艦隊→1、第4艦隊→2
+     */
+    public void setLane(int lane) {
+        this.lane = lane;
+    }
+    /**
+     * どのタイミングかをセットする
+     * @param timePosition タイミング
+     */
+    public void setTimePosition(int timePosition) {
+        this.timePosition = timePosition;
+    }
     /**
      * タスクブロックにした際の横位置
      * @return 横位置

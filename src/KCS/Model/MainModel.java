@@ -33,21 +33,45 @@ public class MainModel {
 
     // privateなプロパティ
     /**
-     * ドラッグ開始点
+     * ドラッグ開始点のX座標
      */
     private final ObjectProperty<Double> dragStartPointX = new SimpleObjectProperty<>(0.0);
+    /**
+     * ドラッグ開始点のY座標
+     */
     private final ObjectProperty<Double> dragStartPointY = new SimpleObjectProperty<>(0.0);
     /**
-     * ドラッグ途中点
+     * ドラッグ途中点のX座標
      */
     private final ObjectProperty<Double> dragMediumPointX = new SimpleObjectProperty<>(0.0);
+    /**
+     * ドラッグ途中点のY座標
+     */
     private final ObjectProperty<Double> dragMediumPointY = new SimpleObjectProperty<>(0.0);
     /**
-     * ドラッグ終了点
+     * ドラッグ終了点のX座標
      */
     private final ObjectProperty<Double> dragEndPointX = new SimpleObjectProperty<>(0.0);
+    /**
+     * ドラッグ終了点のY座標
+     */
     private final ObjectProperty<Double> dragEndPointY = new SimpleObjectProperty<>(0.0);
+    /**
+     * 現在選択しているタスクブロックのインデックス
+     */
     private final ObjectProperty<Integer> selectedExpTaskIndex = new SimpleObjectProperty<>(-1);
+    /**
+     * 現在ドラッグしているタスクブロックのインデックス
+     */
+    private final ObjectProperty<Integer> draggedExpTaskIndex = new SimpleObjectProperty<>(-1);
+    /**
+     * 現在ドラッグしているタスクブロックの左上座標(マウスポインタ基準)のX座標
+     */
+    private final ObjectProperty<Double> draggedExpTaskOffsetX = new SimpleObjectProperty<>(0.0);
+    /**
+     * 現在ドラッグしているタスクブロックの左上座標(マウスポインタ基準)のY座標
+     */
+    private final ObjectProperty<Double> draggedExpTaskOffsetY = new SimpleObjectProperty<>(0.0);
 
     // privateなフィールド
     /**
@@ -60,20 +84,22 @@ public class MainModel {
     private Canvas taskBoard;
 
     // privateな処理
+
     /**
-     * 情報表示用のテキストを変更する
+     * 入力座標が、いずれかのタスクの上かを調べる
+     * @param mouseX 入力X座標
+     * @param mouseY 入力Y座標
+     * @return タスクのインデックス(非選択なら-1)
      */
-    private void redrawStatusMessage(){
-        Platform.runLater(() -> statusMessage.setValue(
-                String.format("マウス座標：(%d,%d)->(%d,%d)->(%d,%d)",
-                        Math.round(dragStartPointX.getValue()),
-                        Math.round(dragStartPointY.getValue()),
-                        Math.round(dragMediumPointX.getValue()),
-                        Math.round(dragMediumPointY.getValue()),
-                        Math.round(dragEndPointX.getValue()),
-                        Math.round(dragEndPointY.getValue())
-                )
-        ));
+    private int getTaskBlockIndex(double mouseX, double mouseY){
+        for(int i = 0; i < expTaskList.size(); ++i) {
+            TaskInfo taskInfo = expTaskList.get(i);
+            if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW()
+                    && taskInfo.getY() <= mouseY && mouseY <= taskInfo.getY() + taskInfo.getH()){
+                return i;
+            }
+        }
+        return -1;
     }
 
     // 各種コマンド
@@ -98,6 +124,13 @@ public class MainModel {
         // ドラッグ開始点の座標を記録する
         dragStartPointX.setValue(e.getX());
         dragStartPointY.setValue(e.getY());
+        // ドラッグ開始点がいずれかのタスクブロックの上だった場合、タスクブロックに対する相対座標を記録する
+        int index = getTaskBlockIndex(e.getX(), e.getY());
+        if(index != -1){
+            draggedExpTaskIndex.setValue(index);
+            draggedExpTaskOffsetX.setValue(expTaskList.get(index).getX() - e.getX());
+            draggedExpTaskOffsetY.setValue(expTaskList.get(index).getY() - e.getY());
+        }
         // ドラッグイベントを許可する
         taskBoard.startFullDrag();
         e.consume();
@@ -123,24 +156,50 @@ public class MainModel {
         // ドラッグ終了点の座標を記録する
         dragEndPointX.setValue(e.getX());
         dragEndPointY.setValue(e.getY());
+        // ドラッグを終了したので、放したタスクブロックの位置を再計算する
+        if(draggedExpTaskIndex.getValue() != -1){
+            int index = draggedExpTaskIndex.getValue();
+            int newX = (int)(dragEndPointX.getValue() + draggedExpTaskOffsetX.getValue());
+            int newY = (int)(dragEndPointY.getValue() + draggedExpTaskOffsetY.getValue());
+            int newTimePosition = Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
+            int newLane = (int)Math.round((newY + Utility.TASK_PIECE_HEIGHT / 2 - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+            // 他のタスクと重なるようには置けないし、同名遠征を別レーンで重なるように配置できないことに注意
+            TaskInfo draggedTask = expTaskList.get(index);
+            boolean rejectFlg = false;
+            for(int i = 0; i < expTaskList.size(); ++i) {
+                if(i == index)
+                    continue;
+                TaskInfo taskInfo = expTaskList.get(i);
+                if(taskInfo.getEndTimePosition() <= newTimePosition)
+                    continue;
+                if(taskInfo.getTimePosition() >= newTimePosition + draggedTask.getTimePositionwidth())
+                    continue;
+                if(draggedTask.getExpInfo().getName().equals(taskInfo.getExpInfo().getName())){
+                    rejectFlg = true;
+                    break;
+                }
+                if(newLane == taskInfo.getLane()){
+                    rejectFlg = true;
+                    break;
+                }
+            }
+            if(!rejectFlg) {
+                draggedTask.setTimePosition(newTimePosition);
+                draggedTask.setLane(newLane);
+            }
+            draggedExpTaskIndex.setValue(-1);
+        }
         //Canvasを再描画する
         RedrawCanvasCommand(false);
         //
         e.consume();
     }
+    /**
+     *　TaskBoard上でマウスクリックした際のイベント
+     * @param e マウスイベント
+     */
     public void TaskBoardMouseClicked(MouseEvent e){
-        // クリックした座標が、いずれかのタスクの上かを調べる
-        double mouseX = e.getX();
-        double mouseY = e.getY();
-        for(int i = 0; i < expTaskList.size(); ++i) {
-            TaskInfo taskInfo = expTaskList.get(i);
-            if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW()
-                    && taskInfo.getY() <= mouseY && mouseY <= taskInfo.getY() + taskInfo.getH()){
-                selectedExpTaskIndex.setValue(i);
-                return;
-            }
-        }
-        selectedExpTaskIndex.setValue(-1);
+        selectedExpTaskIndex.setValue(getTaskBlockIndex(e.getX(), e.getY()));
     }
     /**
      * TaskBoardを再描画する
@@ -177,7 +236,7 @@ public class MainModel {
                     Utility.TASK_BOARD_MARGIN + (hour - 5) * Utility.TASK_PIECE_WIDTH * 60 / Utility.MIN_TASK_PIECE_TIME - 16,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT + 24);
         }
-        // 既存のタスクを表示する
+        // 既存のタスクを表示する(ドラッグ中のものは除く)
         gc.setStroke(Color.BLACK);
         for(int i = 0; i < expTaskList.size(); ++i){
             TaskInfo taskInfo  =expTaskList.get(i);
@@ -185,11 +244,26 @@ public class MainModel {
             int y = taskInfo.getY();
             int w = taskInfo.getW();
             int h = taskInfo.getH();
-            if(i == selectedExpTaskIndex.getValue()){
+            if(i == draggedExpTaskIndex.getValue()){
+                continue;
+            }else if(i == selectedExpTaskIndex.getValue()){
                 gc.setFill(Color.ORANGE);
             }else {
                 gc.setFill(Color.LIGHTSKYBLUE);
             }
+            gc.fillRect(x, y, w, h);
+            gc.strokeRect(x, y, w, h);
+        }
+        // ドラッグ中のタスクを表示する
+        if(draggedExpTaskIndex.getValue() != -1){
+            // 選択されているタスク
+            TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex.getValue());
+            double x = dragMediumPointX.getValue() + draggedExpTaskOffsetX.getValue();
+            double y = dragMediumPointY.getValue() + draggedExpTaskOffsetY.getValue();
+            int w = taskInfo.getW();
+            int h = taskInfo.getH();
+            gc.setFill(Color.GREEN);
+            gc.setGlobalAlpha(0.5);
             gc.fillRect(x, y, w, h);
             gc.strokeRect(x, y, w, h);
         }
@@ -212,13 +286,6 @@ public class MainModel {
                     )
             ));
         }
-        //
-        gc.setFill(Color.RED);
-        gc.fillOval(dragStartPointX.getValue() - 10, dragStartPointY.getValue() - 10, 20, 20);
-        gc.setFill(Color.BLUE);
-        gc.setGlobalAlpha(0.5);
-        gc.fillOval(dragMediumPointX.getValue() - 20, dragMediumPointY.getValue() - 20, 40, 40);
-        gc.setGlobalAlpha(1.0);
     }
 
     /**
@@ -226,14 +293,7 @@ public class MainModel {
      */
     public MainModel(Canvas taskBoard){
         this.taskBoard = taskBoard;
-        // マウスドラッグによるイベント処理
-        dragStartPointX.addListener((b,o,n)->redrawStatusMessage());
-        dragStartPointY.addListener((b,o,n)->redrawStatusMessage());
-        dragMediumPointX.addListener((b,o,n)->redrawStatusMessage());
-        dragMediumPointY.addListener((b,o,n)->redrawStatusMessage());
-        dragEndPointX.addListener((b,o,n)->redrawStatusMessage());
-        dragEndPointY.addListener((b,o,n)->redrawStatusMessage());
-        // その他の行動によるイベント処理
+        // イベント処理
         selectedExpTaskIndex.addListener((b,o,n)->RedrawCanvasCommand(false));
         // テスト
         expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 0, 5));
