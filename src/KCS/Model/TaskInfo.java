@@ -89,6 +89,12 @@ public class TaskInfo {
     public String getName() { return expInfo.getName(); }
 
     /**
+     * 遠征情報を文字列で返す
+     * @return 遠征情報
+     */
+    @Override public String toString() { return expInfo.toString(); }
+
+    /**
      * コンストラクタ
      * @param expInfo 割り当てられる遠征
      * @param lane 割り当てられる艦隊

@@ -205,8 +205,13 @@ public class MainModel {
      * @param e マウスイベント
      */
     public void TaskBoardMouseClicked(MouseEvent e){
-        selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
-        RedrawCanvasCommand(false);
+        int temp = getTaskBlockIndex(e.getX(), e.getY());
+        if(temp == selectedExpTaskIndex){
+            Utility.ShowDialog(expTaskList.get(selectedExpTaskIndex).toString(), "遠征の詳細", Alert.AlertType.INFORMATION);
+        }else{
+            selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
+            RedrawCanvasCommand(false);
+        }
     }
     /**
      * TaskBoardを再描画する
