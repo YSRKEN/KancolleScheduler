@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.text.Font?>
+
 <BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="KCS.ViewModel.MainViewModel">
     <top>
         <!-- メニュー項目 -->
@@ -19,8 +25,11 @@
     <center>
         <ScrollPane BorderPane.alignment="CENTER">
          <content>
-            <Canvas fx:id="TaskBoard"/>
+            <Canvas fx:id="TaskBoard" />
          </content>
+         <contextMenu>
+            <ContextMenu fx:id="TaskBoardMenu" />
+         </contextMenu>
         </ScrollPane>
     </center>
     <bottom>

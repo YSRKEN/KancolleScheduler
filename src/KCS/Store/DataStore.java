@@ -1,9 +1,11 @@
 package KCS.Store;
 
+import KCS.Library.Utility;
+
 import java.io.*;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -13,7 +15,7 @@ public class DataStore {
     /**
      * 遠征情報の一覧
      */
-    public static final List<ExpInfo> ExpList = new ArrayList<ExpInfo>();
+    private static final List<ExpInfo> expList = new ArrayList<>();
 
     /**
      * データストアを初期化
@@ -66,7 +68,7 @@ public class DataStore {
                         getFuel, getAmmo, getSteel, getBauxite, getLeftBucket,
                         getLeftBurner, getLeftGear, getLeftCoin, getRightBucket,
                         getRightBurner, getRightGear, getRightCoin, lostFuel, lostAmmo);
-                ExpList.add(expInfo);
+                expList.add(expInfo);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -78,7 +80,28 @@ public class DataStore {
      * @param name 遠征名
      * @return 遠征情報
      */
-    public static ExpInfo GetExpInfoFromName(String name){
-        return ExpList.stream().filter(e -> e.getName().equals(name)).findFirst().get();
+    public static ExpInfo getExpInfoFromName(String name){
+        return expList.stream().filter(e -> e.getName().equals(name)).findFirst().get();
+    }
+    /**
+     * 遠征一覧をツリー形式で取得する(ツリー形式なのにLinkedHashMapって型名なのはご愛嬌)
+     * @return 遠征一覧。expNameTree["海域名"] = {@code List<String> 遠征一覧}として取得できる
+     */
+    public static LinkedHashMap<String, List<String>> getExpNameTree(){
+        // ここでLinkedHashMapとしたのは、キーの順序を投入順にしたかったため
+        LinkedHashMap<String, List<String>> expNameTree = new LinkedHashMap<>();
+        // 海域名を順に投入し、それぞれの海域名に適合する遠征を追加していく
+        List<String> expAreaNameList = expList.stream().map(e -> e.getAreaName()).distinct().collect(Collectors.toList());
+        for(String areaName : expAreaNameList) {
+            // 遠征一覧を取得(長すぎる遠征は予め除いておく)
+            List<String> expListOnArea = expList.stream()
+                    .filter(e -> e.getAreaName().equals(areaName))
+                    .filter(e -> e.getTime() <= Utility.MINUTE_PER_HOUR * Utility.HOUR_PER_DAY)
+                    .map(e -> e.getName())
+                    .collect(Collectors.toList());
+            // 海域・遠征追加
+            expNameTree.put(areaName, expListOnArea);
+        }
+        return expNameTree;
     }
 }

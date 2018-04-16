@@ -202,4 +202,5 @@ public class ExpInfo {
     }
     public String getName(){ return name; }
     public int getTime(){ return time; }
+    public String getAreaName() { return areaName; }
 }

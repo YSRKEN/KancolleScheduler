@@ -3,24 +3,24 @@ package KCS.Model;
 import KCS.Store.DataStore;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.PointLight;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import KCS.Library.Utility;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.util.Pair;
-import sun.awt.FontDescriptor;
-import sun.font.FontFamily;
 
-import java.util.ArrayList;
-import java.util.List;
+import javax.xml.crypto.Data;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,6 +59,10 @@ public class MainModel {
      * Canvasを処理するため止むなく引っ張るポインタ
      */
     private Canvas taskBoard;
+    /**
+     * 右クリックメニューを処理するため止むなく引っ張るポインタ
+     */
+    private ContextMenu taskBoardMenu;
 
     // privateな処理
     /**
@@ -76,6 +80,24 @@ public class MainModel {
             }
             return false;
         }).findFirst().orElse(-1);
+    }
+    /**
+     * コンテキストメニューを初期化
+     */
+    private void initializeContextMenu() {
+        // 遠征ツリーを取得する
+        LinkedHashMap<String, List<String>> expNameTree = DataStore.getExpNameTree();
+        // 遠征ツリーをコンテキストメニューに反映させる
+        for(Map.Entry<String, List<String>> entry : expNameTree.entrySet()){
+            Menu base = new Menu();
+            base.setText(entry.getKey());
+            entry.getValue().stream().forEach(name ->{
+                MenuItem item = new MenuItem();
+                item.setText(name);
+                base.getItems().add(item);
+            });
+            taskBoardMenu.getItems().add(base);
+        }
     }
 
     // 各種コマンド
@@ -97,6 +119,9 @@ public class MainModel {
      * @param e マウスイベント
      */
     public void TaskBoardDragDetected(MouseEvent e){
+        // 左クリックじゃないと無視する
+        if(e.getButton() != MouseButton.PRIMARY)
+            return;
         // ドラッグ開始点がいずれかのタスクブロックの上だった場合、タスクブロックに対する相対座標を記録する
         int index = getTaskBlockIndex(e.getX(), e.getY());
         if(index != -1){
@@ -205,12 +230,15 @@ public class MainModel {
      * @param e マウスイベント
      */
     public void TaskBoardMouseClicked(MouseEvent e){
-        int temp = getTaskBlockIndex(e.getX(), e.getY());
-        if(temp == selectedExpTaskIndex){
+        // 左クリックじゃないと無視する
+        if(e.getButton() != MouseButton.PRIMARY)
+            return;
+        // クリックしたらその遠征についての情報をステータスバーに表示・画面も再描画
+        selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
+        RedrawCanvasCommand(false);
+        // ダブルクリックなら詳細表示
+        if(e.getClickCount() >= 2){
             Utility.ShowDialog(expTaskList.get(selectedExpTaskIndex).toString(), "遠征の詳細", Alert.AlertType.INFORMATION);
-        }else{
-            selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
-            RedrawCanvasCommand(false);
         }
     }
     /**
@@ -309,11 +337,14 @@ public class MainModel {
     /**
      * コンストラクタ
      */
-    public MainModel(Canvas taskBoard){
+    public MainModel(Canvas taskBoard, ContextMenu taskBoardMenu){
         this.taskBoard = taskBoard;
+        this.taskBoardMenu = taskBoardMenu;
+        // コンテキストメニューを初期化
+        initializeContextMenu();
         // テスト
-        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 0, 5));
-        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("海上護衛任務"), 1, 30));
-        expTaskList.add(new TaskInfo(DataStore.GetExpInfoFromName("長距離練習航海"), 0, 30));
+        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("海上護衛任務"), 0, 5));
+        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("海上護衛任務"), 1, 30));
+        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("長距離練習航海"), 0, 30));
     }
 }

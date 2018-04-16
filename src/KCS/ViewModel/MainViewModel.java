@@ -3,6 +3,7 @@ package KCS.ViewModel;
 import KCS.Library.Utility;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import KCS.Model.MainModel;
@@ -27,6 +28,10 @@ public class MainViewModel {
      * 情報表示用のラベル
      */
     @FXML private Label StatusMessage;
+    /**
+     * コンテキストメニュー
+     */
+    @FXML private ContextMenu TaskBoardMenu;
 
     /**
      * MainViewと接続するモデル
@@ -37,7 +42,7 @@ public class MainViewModel {
      * ViewModelを初期化
      */
     @FXML private void initialize(){
-        mainModel = new MainModel(TaskBoard);
+        mainModel = new MainModel(TaskBoard, TaskBoardMenu);
         // コントロールの大きさを直接指定
         TaskBoard.setWidth(Utility.CANVAS_WIDTH);
         TaskBoard.setHeight(Utility.CANVAS_HEIGHT);
