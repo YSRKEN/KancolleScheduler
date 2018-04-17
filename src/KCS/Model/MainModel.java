@@ -17,6 +17,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import KCS.Library.Utility;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
 
@@ -104,8 +105,11 @@ public class MainModel {
             });
             taskBoardMenu.getItems().add(base);
         }
+        MenuItem deleteMenu = new MenuItem();
+        deleteMenu.setText("【このタスクを削除】");
+        deleteMenu.setOnAction(e -> deleteTaskBlock());
+        taskBoardMenu.getItems().add(deleteMenu);
     }
-
     /**
      * 他のどのタスクブロックと干渉しているかを算出
      * @param wantAddingTask 追加したいタスクブロック
@@ -151,6 +155,13 @@ public class MainModel {
         // 遠征を追加する
         expTaskList.add(new TaskInfo(expInfo, lane, timePosition));
         RedrawCanvasCommand(false);
+    }
+    private void deleteTaskBlock(){
+        int deleteTaskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+        if(deleteTaskBlockIndex != -1){
+            expTaskList.remove(deleteTaskBlockIndex);
+            RedrawCanvasCommand(false);
+        }
     }
 
     // 各種コマンド
@@ -269,6 +280,7 @@ public class MainModel {
     public void TaskBoardMouseClicked(MouseEvent e){
         // 左クリックじゃない場合は、座標だけ記憶する
         if(e.getButton() != MouseButton.PRIMARY) {
+            selectedExpTaskIndex = -1;
             mouseRightClickPoint = new Pair<>(e.getX(), e.getY());
             return;
         }
@@ -320,7 +332,7 @@ public class MainModel {
         IntStream.range(0, expTaskList.size())
             .filter(i -> i != draggedExpTaskIndex)
             .forEach(i -> {
-                TaskInfo taskInfo  =expTaskList.get(i);
+                TaskInfo taskInfo = expTaskList.get(i);
                 double x = taskInfo.getX();
                 double y = taskInfo.getY();
                 double w = taskInfo.getW();
@@ -332,6 +344,9 @@ public class MainModel {
                 }
                 gc.fillRect(x, y, w, h);
                 gc.strokeRect(x, y, w, h);
+                gc.setFill(Color.RED);
+                gc.setFont(Font.font("", FontWeight.BOLD, 16));
+                gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
         });
         // ドラッグ中のタスクを表示する
         if(draggedExpTaskIndex != -1){
