@@ -7,6 +7,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import KCS.Model.MainModel;
+import javafx.scene.control.ScrollPane;
 
 /**
  * MainViewとMainModelとを接続するViewModel

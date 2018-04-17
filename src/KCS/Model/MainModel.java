@@ -1,6 +1,7 @@
 package KCS.Model;
 
 import KCS.Store.DataStore;
+import KCS.Store.ExpInfo;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -39,6 +40,10 @@ public class MainModel {
      * ドラッグ途中点の座標
      */
     private Pair<Double, Double> dragMediumPoint;
+    /**
+     * 右クリックした際のマウス座標
+     */
+    private Pair<Double, Double> mouseRightClickPoint;
     /**
      * 現在選択しているタスクブロックのインデックス
      */
@@ -94,10 +99,58 @@ public class MainModel {
             entry.getValue().stream().forEach(name ->{
                 MenuItem item = new MenuItem();
                 item.setText(name);
+                item.setOnAction(e -> addTaskBlock(item.getText()));
                 base.getItems().add(item);
             });
             taskBoardMenu.getItems().add(base);
         }
+    }
+
+    /**
+     * 他のどのタスクブロックと干渉しているかを算出
+     * @param wantAddingTask 追加したいタスクブロック
+     * @param timePosition 追加したい左位置
+     * @param lane 追加したい上位置
+     * @return 干渉しているタスクブロックの一覧を返す
+     */
+    private List<TaskInfo> getInterferenceTaskList(TaskInfo wantAddingTask, int timePosition, int lane){
+        int newEndtimePosition = timePosition + wantAddingTask.getTimePositionwidth();
+        return expTaskList.stream().filter(taskInfo -> {
+            // 同一のタスクは飛ばす
+            if (wantAddingTask.getX() == taskInfo.getX() && wantAddingTask.getY() == taskInfo.getY())
+                return false;
+            // 横方向について重なっていなければ飛ばす
+            if(taskInfo.getEndTimePosition() <= timePosition)
+                return false;
+            if(taskInfo.getTimePosition() >= newEndtimePosition)
+                return false;
+            // 遠征名が被っている場合はアウト
+            if(wantAddingTask.getName().equals(taskInfo.getName()))
+                return true;
+            // 同一艦隊の場合はアウト
+            if(lane == taskInfo.getLane())
+                return true;
+            return false;
+        }).collect(Collectors.toList());
+    }
+    /**
+     * 遠征を画面内の適当な位置に追加する
+     */
+    private void addTaskBlock(String name){
+        // 追加する遠征の情報
+        ExpInfo expInfo = DataStore.getExpInfoFromName(name);
+        // 左クリックした座標に遠征を配置できるかを調べる
+        int timePosition = (int)(mouseRightClickPoint.getKey() / Utility.TASK_PIECE_WIDTH);
+        int lane = (int)(mouseRightClickPoint.getValue() / Utility.TASK_PIECE_HEIGHT);
+        if(timePosition < 0 || timePosition >= Utility.TASK_PIECE_SIZE
+                || lane < 0 || lane >= Utility.LANES)
+            return;
+        List<TaskInfo> interferenceTaskList = getInterferenceTaskList(new TaskInfo(expInfo, -1, -1), timePosition, lane);
+        if(interferenceTaskList.size() > 0)
+            return;
+        // 遠征を追加する
+        expTaskList.add(new TaskInfo(expInfo, lane, timePosition));
+        RedrawCanvasCommand(false);
     }
 
     // 各種コマンド
@@ -162,26 +215,9 @@ public class MainModel {
             double newY = e.getY() + draggedExpTaskOffset.getValue();
             // 当該タスクブロックのタイミングおよび終了タイミングおよび艦隊番号
             int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
-            int newEndtimePosition = newTimePosition + draggedTask.getTimePositionwidth();
             int newLane = (int)Math.round((newY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
             // 他のどのタスクブロックと干渉しているかを算出
-            List<TaskInfo> interferenceList = expTaskList.stream().filter(taskInfo -> {
-                // 同一のタスクは飛ばす
-                if (draggedTask.getX() == taskInfo.getX() && draggedTask.getY() == taskInfo.getY())
-                    return false;
-                // 横方向について重なっていなければ飛ばす
-                if(taskInfo.getEndTimePosition() <= newTimePosition)
-                    return false;
-                if(taskInfo.getTimePosition() >= newEndtimePosition)
-                    return false;
-                // 遠征名が被っている場合はアウト
-                if(draggedTask.getName().equals(taskInfo.getName()))
-                    return true;
-                // 同一艦隊の場合はアウト
-                if(newLane == taskInfo.getLane())
-                    return true;
-                return false;
-            }).collect(Collectors.toList());
+            List<TaskInfo> interferenceList = getInterferenceTaskList(draggedTask, newTimePosition, newLane);
             // 何も干渉してない場合はそれでOK
             // 1つだけ干渉している場合はそれと被らないように移動
             // 2つ以上干渉している場合は移動させない
@@ -192,6 +228,7 @@ public class MainModel {
                 break;
             case 1:
             {
+                int newEndtimePosition = newTimePosition + draggedTask.getTimePositionwidth();
                 // 横方向について、ギリギリまで寄れるようにする
                 //右の距離と左の距離とを測定する
                 TaskInfo taskInfo = interferenceList.get(0);
@@ -230,9 +267,11 @@ public class MainModel {
      * @param e マウスイベント
      */
     public void TaskBoardMouseClicked(MouseEvent e){
-        // 左クリックじゃないと無視する
-        if(e.getButton() != MouseButton.PRIMARY)
+        // 左クリックじゃない場合は、座標だけ記憶する
+        if(e.getButton() != MouseButton.PRIMARY) {
+            mouseRightClickPoint = new Pair<>(e.getX(), e.getY());
             return;
+        }
         // クリックしたらその遠征についての情報をステータスバーに表示・画面も再描画
         selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
         RedrawCanvasCommand(false);
