@@ -175,7 +175,7 @@ public class MainModel {
     public void LoadCommand(){
         // ファイルを選択
         FileChooser fc = new FileChooser();
-        fc.setTitle("ファイルを選択");
+        fc.setTitle("ファイルを開く");
         fc.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("CSV", "*.csv"),
                 new FileChooser.ExtensionFilter("ALL", "*.*")
@@ -220,6 +220,7 @@ public class MainModel {
                 });
                 RedrawCanvasCommand(false);
             } catch (IOException e) {
+                Utility.ShowDialog("ファイルを開けませんでした。", "読み込み情報", Alert.AlertType.ERROR);
                 e.printStackTrace();
             }
         }
@@ -228,7 +229,31 @@ public class MainModel {
      * 保存コマンド
      */
     public void SaveCommand(){
-
+        // ファイルを選択
+        FileChooser fc = new FileChooser();
+        fc.setTitle("ファイルを保存");
+        fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("CSV", "*.csv"),
+                new FileChooser.ExtensionFilter("ALL", "*.*")
+        );
+        File file = fc.showSaveDialog(null);
+        if(file == null)
+            return;
+        // 保存用のテキストを作成
+        if(expTaskList.size() == 0) {
+            Utility.ShowDialog("遠征タスクが1つも存在しません。", "書き込み情報", Alert.AlertType.ERROR);
+            return;
+        }
+        StringBuffer sb = new StringBuffer();
+        sb.append(String.format("遠征名,艦隊番号,タイミング%n"));
+        expTaskList.forEach(t -> sb.append(String.format("%s,%d,%d%n", t.getName(), t.getLane(), t.getTimePosition())));
+        try(FileWriter fw = new FileWriter(file);
+        BufferedWriter bw = new BufferedWriter(fw)){
+            bw.write(sb.toString());
+        } catch (IOException e) {
+            Utility.ShowDialog("ファイルを保存できませんでした。", "読み込み情報", Alert.AlertType.ERROR);
+            e.printStackTrace();
+        }
     }
     /**
      * 終了コマンド
