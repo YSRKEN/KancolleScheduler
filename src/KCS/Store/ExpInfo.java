@@ -84,13 +84,13 @@ public class ExpInfo {
             }
             if(getLeftGear != 0){
                 if(count > 0) sb.append(",");
-                sb.append(String.format("ギア%f", getLeftGear)
+                sb.append(String.format("開発資材%f", getLeftGear)
                         .replaceAll("0+$", "").replaceAll("\\.$", ""));
                 ++count;
             }
             if(getLeftCoin != 0){
                 if(count > 0) sb.append(",");
-                sb.append(String.format("コイン%f", getLeftCoin)
+                sb.append(String.format("家具コイン%f", getLeftCoin)
                         .replaceAll("0+$", "").replaceAll("\\.$", ""));
                 ++count;
             }
@@ -114,13 +114,13 @@ public class ExpInfo {
             }
             if(getRightGear != 0){
                 if(count > 0) sb.append(",");
-                sb.append(String.format("ギア%f", getRightGear)
+                sb.append(String.format("開発資材%f", getRightGear)
                         .replaceAll("0+$", "").replaceAll("\\.$", ""));
                 ++count;
             }
             if(getRightCoin != 0){
                 if(count > 0) sb.append(",");
-                sb.append(String.format("コイン%f", getRightCoin)
+                sb.append(String.format("家具コイン%f", getRightCoin)
                         .replaceAll("0+$", "").replaceAll("\\.$", ""));
                 ++count;
             }
@@ -200,7 +200,92 @@ public class ExpInfo {
         this.lostFuel = lostFuel;
         this.lostAmmo = lostAmmo;
     }
+
+    /**
+     * 遠征名を取得
+     * @return 遠征名
+     */
     public String getName(){ return name; }
+
+    /**
+     * 遠征時間を取得
+     * @return 遠征時間(分)
+     */
     public int getTime(){ return time; }
+
+    /**
+     * 海域名を取得
+     * @return 海域名
+     */
     public String getAreaName() { return areaName; }
+
+    /**
+     * 燃料の収益
+     * @param addPer 加算％
+     * @param ciFlg 大成功するか？
+     * @return 燃料の収益
+     */
+    public long fuelValue(int addPer, boolean ciFlg){
+        return Math.round(getFuel * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - lostFuel;
+    }
+    /**
+     * 弾薬の収益
+     * @param addPer 加算％
+     * @param ciFlg 大成功するか？
+     * @return 弾薬の収益
+     */
+    public long ammoValue(int addPer, boolean ciFlg){
+        return Math.round(getAmmo * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - lostAmmo;
+    }
+    /**
+     * 鋼材の収益
+     * @param addPer 加算％
+     * @param ciFlg 大成功するか？
+     * @return 鋼材の収益
+     */
+    public long steelValue(int addPer, boolean ciFlg){
+        return Math.round(getSteel * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100));
+    }
+    /**
+     * ボーキの収益
+     * @param addPer 加算％
+     * @param ciFlg 大成功するか？
+     * @return ボーキの収益
+     */
+    public long bauxValue(int addPer, boolean ciFlg){
+        return Math.round(getBauxite * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100));
+    }
+
+    /**
+     * バケツの収益
+     * @param ciFlg 大成功するか？
+     * @return バケツの収益
+     */
+    public double bucketValue(boolean ciFlg){
+        return getLeftBucket + (ciFlg ? getRightBucket : 0.0);
+    }
+    /**
+     * バーナーの収益
+     * @param ciFlg 大成功するか？
+     * @return バーナーの収益
+     */
+    public double burnerValue(boolean ciFlg){
+        return getLeftBurner + (ciFlg ? getRightBurner : 0.0);
+    }
+    /**
+     * 開発資材の収益
+     * @param ciFlg 大成功するか？
+     * @return 開発資材の収益
+     */
+    public double gearValue(boolean ciFlg){
+        return getLeftGear + (ciFlg ? getRightGear : 0.0);
+    }
+    /**
+     * 家具コインの収益
+     * @param ciFlg 大成功するか？
+     * @return 家具コインの収益
+     */
+    public double coinValue(boolean ciFlg){
+        return getLeftCoin + (ciFlg ? getRightCoin : 0.0);
+    }
 }

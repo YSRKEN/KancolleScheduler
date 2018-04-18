@@ -87,6 +87,7 @@ public class TaskInfo {
      * @return 遠征名
      */
     public String getName() { return expInfo.getName(); }
+    public ExpInfo getExpInfo(){ return expInfo; }
 
     /**
      * 遠征情報を文字列で返す

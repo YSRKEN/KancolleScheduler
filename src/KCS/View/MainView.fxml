@@ -23,9 +23,9 @@
             </Menu>
          <Menu mnemonicParsing="false" text="操作(_A)">
            <items>
-             <MenuItem text="情報表示(_I)" />
+             <MenuItem fx:id="ShowInfoMenu" text="情報表示(_I)" />
                <SeparatorMenuItem/>
-               <MenuItem text="全削除(_D)" />
+               <MenuItem fx:id="AllDeleteMenu" text="全削除(_D)" />
            </items>
          </Menu>
             <Menu text="ヘルプ(_H)">

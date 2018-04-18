@@ -7,10 +7,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
@@ -189,7 +186,7 @@ public class MainModel {
                 data.map(getLine -> {
                     // 3つに分割できなければアウト
                     String[] temp = getLine.split(",");
-                    if(temp.length != 3)
+                    if(temp.length < 3)
                         return null;
                     String name = temp[0];
                     try{
@@ -260,6 +257,39 @@ public class MainModel {
      */
     public void ExitCommand(){
         System.exit(0);
+    }
+    /**
+     * 情報表示コマンド
+     */
+    public void ShowInfoCommand(){
+        long allFuel = expTaskList.stream().mapToLong(t->t.getExpInfo().fuelValue(0, false)).sum();
+        long allAmmo = expTaskList.stream().mapToLong(t->t.getExpInfo().ammoValue(0, false)).sum();
+        long allSteel = expTaskList.stream().mapToLong(t->t.getExpInfo().steelValue(0, false)).sum();
+        long allBaux = expTaskList.stream().mapToLong(t->t.getExpInfo().bauxValue(0, false)).sum();
+        double allBucket = expTaskList.stream().mapToDouble(t->t.getExpInfo().bucketValue(false)).sum();
+        double allBurner = expTaskList.stream().mapToDouble(t->t.getExpInfo().burnerValue(false)).sum();
+        double allGear = expTaskList.stream().mapToDouble(t->t.getExpInfo().gearValue( false)).sum();
+        double allCoin = expTaskList.stream().mapToDouble(t->t.getExpInfo().coinValue(false)).sum();
+        Utility.ShowDialog(String.format(
+                "燃料：%d　弾薬：%d　鋼材：%d　ボーキ：%d%nバケツ：%s　バーナー：%s%n開発資材：%s　家具コイン：%s",
+                allFuel, allAmmo, allSteel, allBaux,
+                Utility.DoubleToString(allBucket), Utility.DoubleToString(allBurner),
+                Utility.DoubleToString(allGear), Utility.DoubleToString(allCoin)),
+                "遠征収益", Alert.AlertType.INFORMATION);
+    }
+    /**
+     * 全削除コマンド
+     */
+    public void AllDeleteCommand(){
+        Alert alert = new Alert(Alert.AlertType.WARNING, "遠征タスクを全部削除します。よろしいですか？", ButtonType.YES, ButtonType.NO);
+        alert.setHeaderText("全削除コマンド");
+        alert.setContentText("遠征タスクを全部削除します。よろしいですか？");
+        alert.setTitle(Utility.SOFT_NAME);
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.YES){
+            expTaskList.clear();
+            RedrawCanvasCommand(false);
+        }
     }
     /**
      * バージョン情報コマンド
@@ -386,11 +416,11 @@ public class MainModel {
      * TaskBoardを再描画する
      * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
      */
-    public void RedrawCanvasCommand(boolean mediumFlg){
+    public void RedrawCanvasCommand(boolean mediumFlg) {
         // グラフィックスコンテキストを作成
         GraphicsContext gc = taskBoard.getGraphicsContext2D();
         // 画面を一旦削除
-        gc.clearRect(0,0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
+        gc.clearRect(0, 0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
         gc.setStroke(Color.GRAY);
         IntStream.range(0, Utility.LANES + 1).forEach(row -> {
@@ -420,29 +450,29 @@ public class MainModel {
         // 既存のタスクを表示する(ドラッグ中のものは除く)
         gc.setStroke(Color.BLACK);
         IntStream.range(0, expTaskList.size())
-            .filter(i -> i != draggedExpTaskIndex)
-            .forEach(i -> {
-                TaskInfo taskInfo = expTaskList.get(i);
-                double x = taskInfo.getX();
-                double y = taskInfo.getY();
-                double w = taskInfo.getW();
-                double h = taskInfo.getH();
-                if(i == selectedExpTaskIndex){
-                    gc.setFill(Color.ORANGE);
-                }else {
-                    gc.setFill(Color.LIGHTSKYBLUE);
-                }
-                gc.fillRect(x, y, w, h);
-                gc.strokeRect(x, y, w, h);
-                gc.setFill(Color.RED);
-                gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
-        });
+                .filter(i -> i != draggedExpTaskIndex)
+                .forEach(i -> {
+                    TaskInfo taskInfo = expTaskList.get(i);
+                    double x = taskInfo.getX();
+                    double y = taskInfo.getY();
+                    double w = taskInfo.getW();
+                    double h = taskInfo.getH();
+                    if (i == selectedExpTaskIndex) {
+                        gc.setFill(Color.ORANGE);
+                    } else {
+                        gc.setFill(Color.LIGHTSKYBLUE);
+                    }
+                    gc.fillRect(x, y, w, h);
+                    gc.strokeRect(x, y, w, h);
+                    gc.setFill(Color.RED);
+                    gc.setFont(Font.font("", FontWeight.BOLD, 16));
+                    gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
+                });
         // ドラッグ中のタスクを表示する
-        if(draggedExpTaskIndex != -1){
+        if (draggedExpTaskIndex != -1) {
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex);
-            double x = dragMediumPoint.getKey()   + draggedExpTaskOffset.getKey();
+            double x = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey();
             double y = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue();
             double w = taskInfo.getW();
             double h = taskInfo.getH();
@@ -452,7 +482,7 @@ public class MainModel {
             gc.strokeRect(x, y, w, h);
         }
         // 選択されているタスクの情報を表示する
-        if(selectedExpTaskIndex != -1){
+        if (selectedExpTaskIndex != -1) {
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(selectedExpTaskIndex);
             // タスクの開始時刻を時：分形式に変換

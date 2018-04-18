@@ -26,6 +26,14 @@ public class MainViewModel {
      */
     @FXML private MenuItem ExitMenu;
     /**
+     * 「情報表示」メニュー
+     */
+    public MenuItem ShowInfoMenu;
+    /**
+     * 「全削除」メニュー
+     */
+    public MenuItem AllDeleteMenu;
+    /**
      * 「バージョン情報」メニュー
      */
     @FXML private MenuItem AboutMenu;
@@ -60,6 +68,8 @@ public class MainViewModel {
         // コマンドのバインディング
         LoadFileMenu.setOnAction(e -> mainModel.LoadCommand());
         SaveFileMenu.setOnAction(e -> mainModel.SaveCommand());
+        ShowInfoMenu.setOnAction(e-> mainModel.ShowInfoCommand());
+        AllDeleteMenu.setOnAction(e -> mainModel.AllDeleteCommand());
         ExitMenu.setOnAction(e -> mainModel.ExitCommand());
         AboutMenu.setOnAction(e -> mainModel.ShowVersionInfoCommand());
         TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e));

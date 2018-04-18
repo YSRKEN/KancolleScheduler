@@ -93,4 +93,13 @@ public class Utility {
         alert.setTitle(SOFT_NAME);
         alert.show();
     }
+
+    /**
+     * 浮動小数点数を良い感じに文字列にする
+     * @param x 浮動小数点数
+     * @return 文字列にした結果
+     */
+    public static String DoubleToString(double x){
+        return String.format("%f", x).replaceAll("0+$", "").replaceAll("\\.$", "");
+    }
 }
