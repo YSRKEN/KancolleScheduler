@@ -81,7 +81,7 @@ public class DataStore {
      * @return 遠征情報
      */
     public static ExpInfo getExpInfoFromName(String name){
-        return expList.stream().filter(e -> e.getName().equals(name)).findFirst().get();
+        return expList.stream().filter(e -> e.getName().equals(name)).findFirst().orElse(null);
     }
     /**
      * 遠征一覧をツリー形式で取得する(ツリー形式なのにLinkedHashMapって型名なのはご愛嬌)

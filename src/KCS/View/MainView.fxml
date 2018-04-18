@@ -7,6 +7,7 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.text.Font?>
 
@@ -15,8 +16,18 @@
         <!-- メニュー項目 -->
         <MenuBar>
             <Menu text="ファイル(_F)">
+            <MenuItem fx:id="LoadFileMenu" text="開く(_O)..." />
+            <MenuItem fx:id="SaveFileMenu" text="保存(_A)..." />
+            <SeparatorMenuItem/>
                 <MenuItem fx:id="ExitMenu" text="終了(_X)" />
             </Menu>
+         <Menu mnemonicParsing="false" text="操作(_A)">
+           <items>
+             <MenuItem text="情報表示(_I)" />
+               <SeparatorMenuItem/>
+               <MenuItem text="全削除(_D)" />
+           </items>
+         </Menu>
             <Menu text="ヘルプ(_H)">
                 <MenuItem fx:id="AboutMenu" text="バージョン情報(_A)" />
             </Menu>

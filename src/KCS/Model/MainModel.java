@@ -19,12 +19,16 @@ import KCS.Library.Utility;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.util.Pair;
 
 import javax.xml.crypto.Data;
+import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * MainViewと接続されるModel
@@ -165,6 +169,67 @@ public class MainModel {
     }
 
     // 各種コマンド
+    /**
+     * 開くコマンド
+     */
+    public void LoadCommand(){
+        // ファイルを選択
+        FileChooser fc = new FileChooser();
+        fc.setTitle("ファイルを選択");
+        fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("CSV", "*.csv"),
+                new FileChooser.ExtensionFilter("ALL", "*.*")
+        );
+        File file = fc.showOpenDialog(null);
+        if(file != null){
+            // ファイルが開けたら、CSVデータに対する処理を行う
+            try(Stream<String> data = Files.lines(file.toPath())){
+                expTaskList = new ArrayList<TaskInfo>();
+                // 文字列をパースできるか判定を行い、できる場合はTaskInfo、できない場合はnullを返す
+                data.map(getLine -> {
+                    // 3つに分割できなければアウト
+                    String[] temp = getLine.split(",");
+                    if(temp.length != 3)
+                        return null;
+                    String name = temp[0];
+                    try{
+                        // パースできない or 範囲がおかしい場合はアウト
+                        int lane = Integer.parseInt(temp[1]);
+                        if(lane < 0 || lane >= Utility.LANES)
+                            return null;
+                        int timePosition = Integer.parseInt(temp[2]);
+                        if(timePosition < 0 || timePosition >= Utility.TASK_PIECE_SIZE)
+                            return null;
+                        // 遠征名から遠征情報を取り出せない場合はアウト
+                        ExpInfo expInfo = DataStore.getExpInfoFromName(name);
+                        if(expInfo == null)
+                            return null;
+                        return new TaskInfo(expInfo, lane, timePosition);
+                    }catch(NumberFormatException e){
+                        return null;
+                    }
+                })
+                // nullを除外
+                .filter(t -> t != null)
+                // とりあえず配置してみて、置けないものは無視する
+                .forEach(t -> {
+                    List<TaskInfo> temp = getInterferenceTaskList(t, t.getTimePosition(), t.getLane());
+                    if(temp.size() == 0){
+                        expTaskList.add(t);
+                    }
+                });
+                RedrawCanvasCommand(false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    /**
+     * 保存コマンド
+     */
+    public void SaveCommand(){
+
+    }
     /**
      * 終了コマンド
      */
@@ -396,9 +461,5 @@ public class MainModel {
         this.taskBoardMenu = taskBoardMenu;
         // コンテキストメニューを初期化
         initializeContextMenu();
-        // テスト
-        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("海上護衛任務"), 0, 5));
-        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("海上護衛任務"), 1, 30));
-        expTaskList.add(new TaskInfo(DataStore.getExpInfoFromName("長距離練習航海"), 0, 30));
     }
 }

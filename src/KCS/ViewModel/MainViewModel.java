@@ -14,6 +14,14 @@ import javafx.scene.control.ScrollPane;
  */
 public class MainViewModel {
     /**
+     * 「開く」メニュー
+     */
+    @FXML private MenuItem LoadFileMenu;
+    /**
+     * 「保存」メニュー
+     */
+    @FXML private MenuItem SaveFileMenu;
+    /**
      * 「終了」メニュー
      */
     @FXML private MenuItem ExitMenu;
@@ -50,6 +58,8 @@ public class MainViewModel {
         // プロパティのバインディング
         StatusMessage.textProperty().bind(mainModel.StatusMessage);
         // コマンドのバインディング
+        LoadFileMenu.setOnAction(e -> mainModel.LoadCommand());
+        SaveFileMenu.setOnAction(e -> mainModel.SaveCommand());
         ExitMenu.setOnAction(e -> mainModel.ExitCommand());
         AboutMenu.setOnAction(e -> mainModel.ShowVersionInfoCommand());
         TaskBoard.setOnDragDetected(e -> mainModel.TaskBoardDragDetected(e));
