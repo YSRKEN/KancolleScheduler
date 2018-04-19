@@ -81,9 +81,19 @@ public class MainModel {
     private int getTaskBlockIndex(double mouseX, double mouseY){
         return IntStream.range(0, expTaskList.size()).filter(i -> {
             TaskInfo taskInfo = expTaskList.get(i);
-            if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW()
-                    && taskInfo.getY() <= mouseY && mouseY <= taskInfo.getY() + taskInfo.getH()){
-                return true;
+            if(taskInfo.getY() > mouseY || mouseY > taskInfo.getY() + taskInfo.getH())
+                return false;
+            // 動かすタスクが端で分割されているか否かで処理を分ける
+            if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()){
+                // 分割されていない場合
+                if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW())
+                    return true;
+            }else{
+                // 分割されている場合
+                if(taskInfo.getX() <= mouseX && mouseX <= Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH)
+                    return true;
+                if(Utility.TASK_BOARD_MARGIN <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW())
+                    return true;
             }
             return false;
         }).findFirst().orElse(-1);
@@ -119,16 +129,45 @@ public class MainModel {
      * @return 干渉しているタスクブロックの一覧を返す
      */
     private List<TaskInfo> getInterferenceTaskList(TaskInfo wantAddingTask, int timePosition, int lane){
-        int newEndtimePosition = timePosition + wantAddingTask.getTimePositionwidth();
+        int newEndtimePosition = (timePosition + wantAddingTask.getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
         return expTaskList.stream().filter(taskInfo -> {
             // 同一のタスクは飛ばす
             if (wantAddingTask.getX() == taskInfo.getX() && wantAddingTask.getY() == taskInfo.getY())
                 return false;
             // 横方向について重なっていなければ飛ばす
-            if(taskInfo.getEndTimePosition() <= timePosition)
-                return false;
-            if(taskInfo.getTimePosition() >= newEndtimePosition)
-                return false;
+            // ・既存タスクAに対して目標タスクBが重なっているかを考える
+            // ・A.end = A.startまたはB.end = B.startならば確実に重なるので考慮不要
+            // ・Aが2つに分裂している場合、A.end < A.startである。Bがその間に収まって
+            // 　いればいいので、A.end <= B.startかつB.end <= A.startであればいい
+            // ・Aが2つに分裂していない場合、A.start < A.endである。Bがその前後に入って
+            // 　いればいいので、
+            // 　・Bが手前にある場合、B.start < B.endかつB.end <= A.start
+            // 　・Bが奥にある場合、B.start < B.endかつA.end <= B.start
+            // 　・BがAを包み込む場合、B.end < B.startかつB.end <= A.startかつA.end <= B.start
+            // ・これをまとめると、
+            // 　・A.end < A.startかつA.end <= B.startかつB.end <= A.start
+            // 　・A.start < A.endかつB.start <= B.endかつB.end <= A.start
+            // 　・A.start < A.endかつB.start <= B.endかつA.end <= B.start
+            // 　・B.end < B.startかつB.end <= A.startかつA.end <= B.start
+            // ・論理を整理して、
+            // 　・A.end <= B.startかつB.end <= A.startかつ(A.end < A.startまたはB.end < B.start)
+            // 　・A.start < A.endかつB.start < B.endかつ(B.end <= A.startまたはA.end <= B.start)
+            // ・A.end < A.startを[1]、A.end <= B.startを[2]、B.end <= A.startを[3]、B.end < B.startを[4]と置くと
+            // 　・[2]かつ[3]かつ([1]または[4])
+            // 　・![1]かつ![4]かつ([2]または[3])
+            // ・([2]かつ[3]かつ([1]または[4]))または(![1]かつ![4]かつ([2]または[3]))を論理圧縮すると、
+            // 　(![1]かつ[3]かつ![4])または(![1]かつ[2]かつ![4])または([2]かつ[3])
+            // 　＝([2]かつ[3])または(![1]かつ![4]かつ([2]または[3]))になるそうな
+            if(taskInfo.getTimePosition() != taskInfo.getEndTimePosition() && timePosition != newEndtimePosition){
+                boolean flg1 = (taskInfo.getEndTimePosition() <= taskInfo.getTimePosition());
+                boolean flg2 = (taskInfo.getEndTimePosition() <= timePosition);
+                boolean flg3 = (newEndtimePosition <= taskInfo.getTimePosition());
+                boolean flg4 = (newEndtimePosition <= timePosition);
+                if(flg2 && flg3 && (flg1 || flg4))
+                    return false;
+                if(!flg1 && !flg4 && (flg2 || flg3))
+                    return false;
+            }
             // 遠征名が被っている場合はアウト
             if(wantAddingTask.getName().equals(taskInfo.getName()))
                 return true;
@@ -359,7 +398,7 @@ public class MainModel {
                 break;
             case 1:
             {
-                int newEndtimePosition = newTimePosition + draggedTask.getTimePositionwidth();
+                int newEndtimePosition = (newTimePosition + draggedTask.getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
                 // 横方向について、ギリギリまで寄れるようにする
                 //右の距離と左の距離とを測定する
                 TaskInfo taskInfo = interferenceList.get(0);
@@ -380,9 +419,9 @@ public class MainModel {
             }
             // タスクブロックの位置丸め
             if(draggedTask.getTimePosition() < 0)
-                draggedTask.setTimePosition(0);
-            if(draggedTask.getEndTimePosition() >= Utility.TASK_PIECE_SIZE)
-                draggedTask.setTimePosition(Utility.TASK_PIECE_SIZE - draggedTask.getTimePositionwidth());
+                draggedTask.setTimePosition((draggedTask.getTimePosition() + Utility.TASK_PIECE_SIZE) % Utility.TASK_PIECE_SIZE);
+            if(draggedTask.getTimePosition() >= Utility.TASK_PIECE_SIZE)
+                draggedTask.setTimePosition(draggedTask.getTimePosition() % Utility.TASK_PIECE_SIZE);
             int lane = draggedTask.getLane();
             draggedTask.setLane(lane < 0 ? 0 : lane >= Utility.LANES ? Utility.LANES - 1 : lane);
             // 当該タスクブロックのドラッグ状態を解除
@@ -462,11 +501,25 @@ public class MainModel {
                     } else {
                         gc.setFill(Color.LIGHTSKYBLUE);
                     }
-                    gc.fillRect(x, y, w, h);
-                    gc.strokeRect(x, y, w, h);
-                    gc.setFill(Color.RED);
-                    gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                    gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
+                    if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()) {
+                        gc.fillRect(x, y, w, h);
+                        gc.strokeRect(x, y, w, h);
+                        gc.setFill(Color.RED);
+                        gc.setFont(Font.font("", FontWeight.BOLD, 16));
+                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
+                    }else{
+                        double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
+                        double w3 = w - w2;
+                        double x2 = Utility.TASK_BOARD_MARGIN;
+                        gc.fillRect(x, y, w2, h);
+                        gc.strokeRect(x, y, w2, h);
+                        gc.fillRect(x2, y, w3, h);
+                        gc.strokeRect(x2, y, w3, h);
+                        gc.setFill(Color.RED);
+                        gc.setFont(Font.font("", FontWeight.BOLD, 16));
+                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
+                        gc.fillText(taskInfo.getName(), x2 + 5, y + 16 + 5);
+                    }
                 });
         // ドラッグ中のタスクを表示する
         if (draggedExpTaskIndex != -1) {
@@ -478,8 +531,18 @@ public class MainModel {
             double h = taskInfo.getH();
             gc.setFill(Color.GREEN);
             gc.setGlobalAlpha(0.5);
-            gc.fillRect(x, y, w, h);
-            gc.strokeRect(x, y, w, h);
+            if(Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x >= w) {
+                gc.fillRect(x, y, w, h);
+                gc.strokeRect(x, y, w, h);
+            }else{
+                double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
+                double w3 = w - w2;
+                double x2 = Utility.TASK_BOARD_MARGIN;
+                gc.fillRect(x, y, w2, h);
+                gc.strokeRect(x, y, w2, h);
+                gc.fillRect(x2, y, w3, h);
+                gc.strokeRect(x2, y, w3, h);
+            }
         }
         // 選択されているタスクの情報を表示する
         if (selectedExpTaskIndex != -1) {

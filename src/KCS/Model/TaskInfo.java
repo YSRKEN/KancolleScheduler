@@ -46,7 +46,7 @@ public class TaskInfo {
      * @return 終了タイミング
      */
     public int getEndTimePosition(){
-        return getTimePosition() + getTimePositionwidth();
+        return (getTimePosition() + getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
     }
     /**
      * 第n艦隊かをセットする
