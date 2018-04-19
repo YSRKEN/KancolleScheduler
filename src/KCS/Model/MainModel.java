@@ -408,7 +408,7 @@ public class MainModel {
         selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
         RedrawCanvasCommand(false);
         // ダブルクリックなら詳細表示
-        if(e.getClickCount() >= 2){
+        if(e.getClickCount() >= 2 && selectedExpTaskIndex >= 0){
             Utility.ShowDialog(expTaskList.get(selectedExpTaskIndex).toString(), "遠征の詳細", Alert.AlertType.INFORMATION);
         }
     }
