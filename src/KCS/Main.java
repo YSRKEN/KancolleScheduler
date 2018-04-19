@@ -19,11 +19,11 @@ public class Main extends Application {
      */
     @Override public void start(Stage primaryStage) throws Exception{
         // FXMLを読み込む
-        Parent root = FXMLLoader.load(getClass().getResource("View\\MainView.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("View/MainView.fxml"));
         // タイトルを設定する
         primaryStage.setTitle("艦これスケジューラー");
         // シーングラフとウィンドウの大きさを設定する
-        primaryStage.setScene(new Scene(root, 1600, 450));
+        primaryStage.setScene(new Scene(root, 600, 450));
         // ×ボタンを押した際の挙動を設定する
         primaryStage.setOnCloseRequest(e -> System.exit(0));
         // Stageを表示する

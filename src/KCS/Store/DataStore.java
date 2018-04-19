@@ -4,6 +4,7 @@ import KCS.Library.Utility;
 
 import java.io.*;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,15 +23,9 @@ public class DataStore {
      */
     public static void initialize(){
         // ExpList.csvを読み込み、遠征情報一覧のデータを記憶する
-        File file = null;
-        try {
-            file = new File(ClassLoader.getSystemResource("KCS/File/ExpList.csv").toURI());
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return;
-        }
-        try(FileReader fr = new FileReader(file);
-            BufferedReader br = new BufferedReader(fr)){
+        try(InputStream is = ClassLoader.getSystemResourceAsStream("KCS/File/ExpList.csv");
+            InputStreamReader isr = new InputStreamReader(is, Charset.forName("UTF-8"));
+            BufferedReader br = new BufferedReader(isr)){
             // 1行読み込む
             String getLine;
             while((getLine = br.readLine()) != null){

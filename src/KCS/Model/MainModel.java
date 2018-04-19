@@ -562,7 +562,7 @@ public class MainModel {
                     String.format(
                             "%s(第%d艦隊,%02d:%02d-%02d:%02d)",
                             taskInfo.getName(),
-                            taskInfo.getLane() + 1,
+                            taskInfo.getLane() + 2,
                             hour,
                             minute,
                             hour2,
