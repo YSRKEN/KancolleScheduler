@@ -254,6 +254,7 @@ public class MainModel {
                         expTaskList.add(t);
                     }
                 });
+                selectedExpTaskIndex = -1;
                 RedrawCanvasCommand(false);
             } catch (IOException e) {
                 Utility.ShowDialog("ファイルを開けませんでした。", "読み込み情報", Alert.AlertType.ERROR);
