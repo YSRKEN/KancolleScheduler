@@ -37,6 +37,8 @@ public class MainModel {
      * 情報表示用のテキスト
      */
     public final ObjectProperty<String> StatusMessage = new SimpleObjectProperty<>();
+    public final ObjectProperty<Boolean> RightClickBlankFlg = new SimpleObjectProperty<>(true);
+    public final ObjectProperty<Boolean> RightClickTaskBlockFlg = new SimpleObjectProperty<>(false);
 
     // privateなフィールド
     /**
@@ -108,6 +110,7 @@ public class MainModel {
         // 遠征ツリーをコンテキストメニューに反映させる
         for(Map.Entry<String, List<String>> entry : expNameTree.entrySet()){
             Menu base = new Menu();
+            base.visibleProperty().bindBidirectional(RightClickBlankFlg);
             base.setText(entry.getKey());
             entry.getValue().stream().forEach(name ->{
                 MenuItem item = new MenuItem();
@@ -118,6 +121,7 @@ public class MainModel {
             taskBoardMenu.getItems().add(base);
         }
         MenuItem deleteMenu = new MenuItem();
+        deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         deleteMenu.setText("【このタスクを削除】");
         deleteMenu.setOnAction(e -> deleteTaskBlock());
         taskBoardMenu.getItems().add(deleteMenu);
@@ -443,6 +447,8 @@ public class MainModel {
         if(e.getButton() != MouseButton.PRIMARY) {
             selectedExpTaskIndex = -1;
             mouseRightClickPoint = new Pair<>(e.getX(), e.getY());
+            int taskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+            RightClickTaskBlockFlg.setValue(taskBlockIndex != -1);
             return;
         }
         // クリックしたらその遠征についての情報をステータスバーに表示・画面も再描画
@@ -579,6 +585,7 @@ public class MainModel {
     public MainModel(Canvas taskBoard, ContextMenu taskBoardMenu){
         this.taskBoard = taskBoard;
         this.taskBoardMenu = taskBoardMenu;
+        this.RightClickTaskBlockFlg.addListener((ob,o,n) -> RightClickBlankFlg.setValue(!n));
         // コンテキストメニューを初期化
         initializeContextMenu();
     }
