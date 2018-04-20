@@ -5,7 +5,7 @@ package KCS.Store;
  */
 public class ExpInfo {
     // フィールド群
-    private final int no;
+    private final String no;
     private final String areaName;
     private final int position;
     private final String name;
@@ -171,7 +171,7 @@ public class ExpInfo {
      * @param lostFuel 最小消費燃料
      * @param lostAmmo 最小消費弾薬
      */
-    public ExpInfo(int no, String areaName, int position, String name, int leaderLevel,
+    public ExpInfo(String no, String areaName, int position, String name, int leaderLevel,
                    int sumLevel, int minMemberSize, String wantFleetType, int time,
                    int getFuel, int getAmmo, int getSteel, int getBauxite, double getLeftBucket,
                    double getLeftBurner, double getLeftGear, double getLeftCoin, double getRightBucket,

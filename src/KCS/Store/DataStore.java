@@ -35,7 +35,7 @@ public class DataStore {
                 if(token[0].equals("No."))
                     continue;
                 // 読み込みを行う
-                int no               = Integer.parseInt(token[0]);
+                String no               = token[0];
                 String areaName      = token[1];
                 int position         = Integer.parseInt(token[2]);
                 String name          = token[3];
