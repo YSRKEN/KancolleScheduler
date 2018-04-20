@@ -92,7 +92,7 @@ public class MainModel {
                 // 分割されている場合
                 if(taskInfo.getX() <= mouseX && mouseX <= Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH)
                     return true;
-                if(Utility.TASK_BOARD_MARGIN <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW())
+                if(Utility.TASK_BOARD_MARGIN <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW() - Utility.TASK_BOARD_WIDTH)
                     return true;
             }
             return false;
