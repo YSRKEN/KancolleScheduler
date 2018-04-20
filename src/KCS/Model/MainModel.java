@@ -21,6 +21,7 @@ import javafx.util.Pair;
 
 import javax.xml.crypto.Data;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -219,7 +220,7 @@ public class MainModel {
         File file = fc.showOpenDialog(null);
         if(file != null){
             // ファイルが開けたら、CSVデータに対する処理を行う
-            try(Stream<String> data = Files.lines(file.toPath())){
+            try(Stream<String> data = Files.lines(file.toPath(), Charset.forName("UTF-8"))){
                 expTaskList = new ArrayList<TaskInfo>();
                 // 文字列をパースできるか判定を行い、できる場合はTaskInfo、できない場合はnullを返す
                 data.map(getLine -> {
