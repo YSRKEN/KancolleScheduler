@@ -121,9 +121,16 @@ public class MainModel {
             });
             taskBoardMenu.getItems().add(base);
         }
+        //
+        MenuItem copyMenu = new MenuItem();
+        copyMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
+        copyMenu.setText("このタスクをコピー");
+        copyMenu.setOnAction(e -> copyTaskBlock());
+        taskBoardMenu.getItems().add(copyMenu);
+        //
         MenuItem deleteMenu = new MenuItem();
         deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
-        deleteMenu.setText("【このタスクを削除】");
+        deleteMenu.setText("このタスクを削除");
         deleteMenu.setOnAction(e -> deleteTaskBlock());
         taskBoardMenu.getItems().add(deleteMenu);
     }
@@ -202,6 +209,26 @@ public class MainModel {
         expTaskList.add(new TaskInfo(expInfo, lane, timePosition));
         RedrawCanvasCommand();
     }
+    /**
+     * 遠征タスクをコピーする
+     */
+    private void copyTaskBlock(){
+        // マウスの下に遠征タスクが存在するなら
+        int copyTaskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+        if(copyTaskBlockIndex != -1){
+            // 遠征タスクをコピーし
+            TaskInfo cloneTask = expTaskList.get(copyTaskBlockIndex).clone();
+            // 追加し
+            expTaskList.add(cloneTask);
+            // とりあえず同じ場所に重ねて置く
+            draggedExpTaskIndex = expTaskList.size() - 1;
+            draggedExpTaskOffset = null;
+            RedrawCanvasCommand();
+        }
+    }
+    /**
+     * 遠征タスクを削除する
+     */
     private void deleteTaskBlock(){
         int deleteTaskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
         if(deleteTaskBlockIndex != -1){
@@ -337,15 +364,22 @@ public class MainModel {
         if(e.getButton() != MouseButton.PRIMARY)
             return;
         // ドラッグ開始点がいずれかのタスクブロックの上だった場合、タスクブロックに対する相対座標を記録する
-        int index = getTaskBlockIndex(e.getX(), e.getY());
-        if(index != -1){
-            draggedExpTaskIndex = index;
+        if(draggedExpTaskIndex == -1){
+            int index = getTaskBlockIndex(e.getX(), e.getY());
+            if(index != -1){
+                draggedExpTaskIndex = index;
+            }
+        }else{
+            expTaskList.get(draggedExpTaskIndex).setTimePosition((int)((e.getX() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH));
+            expTaskList.get(draggedExpTaskIndex).setLane((int)((e.getY() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT));
+        }
+        if(draggedExpTaskIndex != -1){
             draggedExpTaskOffset = new Pair<>(
                     expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
                     expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
+            // ドラッグイベントを許可する
+            taskBoard.startFullDrag();
         }
-        // ドラッグイベントを許可する
-        taskBoard.startFullDrag();
         e.consume();
     }
     /**
@@ -516,7 +550,7 @@ public class MainModel {
                     }
                 });
         // ドラッグ中のタスクを表示する
-        if (draggedExpTaskIndex != -1) {
+        if (draggedExpTaskIndex != -1 && draggedExpTaskOffset != null) {
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex);
             double x = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey();

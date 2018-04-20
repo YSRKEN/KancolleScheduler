@@ -7,7 +7,7 @@ import KCS.Store.ExpInfo;
 /**
  * タスク情報を表すクラス
  */
-class TaskInfo {
+class TaskInfo implements Cloneable {
     /**
      * タスクに割り当てられている遠征の情報
      */
@@ -95,6 +95,20 @@ class TaskInfo {
      * @return 遠征情報
      */
     @Override public String toString() { return expInfo.toString(); }
+    /**
+     * cloneメソッドをオーバライド
+     * @return 自身と同じ内容を持つインスタンス
+     */
+    @Override public TaskInfo clone(){
+        TaskInfo result = null;
+        try {
+            result = (TaskInfo)super.clone();
+            result.expInfo = this.expInfo.clone();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return result;
+    }
 
     /**
      * 遠征タスクの情報をCSV形式で返す
