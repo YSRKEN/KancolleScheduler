@@ -1,5 +1,6 @@
 package KCS.Model;
 
+import KCS.Library.Utility;
 import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
 import javafx.application.Platform;
@@ -12,16 +13,15 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import KCS.Library.Utility;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.util.Pair;
 
-import javax.xml.crypto.Data;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -224,29 +224,14 @@ public class MainModel {
         File file = fc.showOpenDialog(null);
         if(file != null){
             // ファイルが開けたら、CSVデータに対する処理を行う
-            try(Stream<String> data = Files.lines(file.toPath(), Charset.forName("UTF-8"))){
+            try(Stream<String> data = Files.lines(file.toPath(), StandardCharsets.UTF_8)){
                 expTaskList = new ArrayList<TaskInfo>();
                 // 文字列をパースできるか判定を行い、できる場合はTaskInfo、できない場合はnullを返す
                 data.map(getLine -> {
-                    // 3つに分割できなければアウト
-                    String[] temp = getLine.split(",");
-                    if(temp.length < 3)
-                        return null;
-                    String name = temp[0];
                     try{
-                        // パースできない or 範囲がおかしい場合はアウト
-                        int lane = Integer.parseInt(temp[1]);
-                        if(lane < 0 || lane >= Utility.LANES)
-                            return null;
-                        int timePosition = Integer.parseInt(temp[2]);
-                        if(timePosition < 0 || timePosition >= Utility.TASK_PIECE_SIZE)
-                            return null;
-                        // 遠征名から遠征情報を取り出せない場合はアウト
-                        ExpInfo expInfo = DataStore.getExpInfoFromName(name);
-                        if(expInfo == null)
-                            return null;
-                        return new TaskInfo(expInfo, lane, timePosition);
+                        return new TaskInfo(getLine);
                     }catch(NumberFormatException e){
+                        //e.printStackTrace();
                         return null;
                     }
                 })
@@ -286,12 +271,11 @@ public class MainModel {
             Utility.ShowDialog("遠征タスクが1つも存在しません。", "書き込み情報", Alert.AlertType.ERROR);
             return;
         }
-        StringBuffer sb = new StringBuffer();
-        sb.append(String.format("遠征名,艦隊番号,タイミング%n"));
-        expTaskList.forEach(t -> sb.append(String.format("%s,%d,%d%n", t.getName(), t.getLane(), t.getTimePosition())));
-        try(FileWriter fw = new FileWriter(file);
-        BufferedWriter bw = new BufferedWriter(fw)){
-            bw.write(sb.toString());
+        try(BufferedWriter bw = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)){
+            bw.write(String.format("遠征名,艦隊番号,タイミング%n"));
+            for(TaskInfo task : expTaskList){
+                bw.write(task.toCsvData());
+            }
         } catch (IOException e) {
             Utility.ShowDialog("ファイルを保存できませんでした。", "読み込み情報", Alert.AlertType.ERROR);
             e.printStackTrace();

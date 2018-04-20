@@ -1,6 +1,7 @@
 package KCS.Model;
 
 import KCS.Library.Utility;
+import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
 
 /**
@@ -96,12 +97,46 @@ public class TaskInfo {
     @Override public String toString() { return expInfo.toString(); }
 
     /**
+     * 遠征タスクの情報をCSV形式で返す
+     * @return 遠征タスクの情報
+     */
+    public String toCsvData(){
+        return String.format("%s,%d,%d%n", this.getName(), this.getLane(), this.getTimePosition());
+    }
+
+    /**
      * コンストラクタ
      * @param expInfo 割り当てられる遠征
      * @param lane 割り当てられる艦隊
      * @param timePosition 割り当てられるタイミング
      */
     public TaskInfo(ExpInfo expInfo, int lane, int timePosition){
+        this.expInfo = expInfo;
+        this.lane = lane;
+        this.timePosition = timePosition;
+    }
+    /**
+     * コンストラクタ
+     * @param csvData CSVの1行
+     */
+    public TaskInfo(String csvData){
+        // 3つに分割できなければアウト
+        String[] temp = csvData.split(",");
+        if(temp.length < 3)
+            throw new NumberFormatException("CSVの列数に異常があります。");
+        String name = temp[0];
+        // パースできない or 範囲がおかしい場合はアウト
+        int lane = Integer.parseInt(temp[1]);
+        if(lane < 0 || lane >= Utility.LANES)
+            throw new NumberFormatException("艦隊番号の指定に異常があります。");
+        int timePosition = Integer.parseInt(temp[2]);
+        if(timePosition < 0 || timePosition >= Utility.TASK_PIECE_SIZE)
+            throw new NumberFormatException("タイミングの指定に異常があります。");
+        // 遠征名から遠征情報を取り出せない場合はアウト
+        ExpInfo expInfo = DataStore.getExpInfoFromName(name);
+        if(expInfo == null)
+            throw new NumberFormatException("遠征名の指定に異常があります。");
+        // 正常に初期化される
         this.expInfo = expInfo;
         this.lane = lane;
         this.timePosition = timePosition;
