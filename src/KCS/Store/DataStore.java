@@ -89,13 +89,13 @@ public class DataStore {
         // ここでLinkedHashMapとしたのは、キーの順序を投入順にしたかったため
         LinkedHashMap<String, List<String>> expNameTree = new LinkedHashMap<>();
         // 海域名を順に投入し、それぞれの海域名に適合する遠征を追加していく
-        List<String> expAreaNameList = expList.stream().map(e -> e.getAreaName()).distinct().collect(Collectors.toList());
+        List<String> expAreaNameList = expList.stream().map(ExpInfo::getAreaName).distinct().collect(Collectors.toList());
         for(String areaName : expAreaNameList) {
             // 遠征一覧を取得(長すぎる遠征は予め除いておく)
             List<String> expListOnArea = expList.stream()
                     .filter(e -> e.getAreaName().equals(areaName))
                     .filter(e -> e.getTime() <= Utility.MINUTE_PER_HOUR * Utility.HOUR_PER_DAY)
-                    .map(e -> e.getName())
+                    .map(ExpInfo::getName)
                     .collect(Collectors.toList());
             // 海域・遠征追加
             expNameTree.put(areaName, expListOnArea);

@@ -7,7 +7,7 @@ import KCS.Store.ExpInfo;
 /**
  * タスク情報を表すクラス
  */
-public class TaskInfo {
+class TaskInfo {
     /**
      * タスクに割り当てられている遠征の情報
      */
@@ -39,7 +39,7 @@ public class TaskInfo {
      * 遠征の期間をTaskPiece単位で返す
      * @return 遠征の期間
      */
-    public int getTimePositionwidth(){
+    public int getTimePositionWidth(){
         return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME;
     }
     /**
@@ -47,7 +47,7 @@ public class TaskInfo {
      * @return 終了タイミング
      */
     public int getEndTimePosition(){
-        return (getTimePosition() + getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
+        return (getTimePosition() + getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
     }
     /**
      * 第n艦隊かをセットする

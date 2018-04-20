@@ -37,8 +37,9 @@ public class MainModel {
      * 情報表示用のテキスト
      */
     public final ObjectProperty<String> StatusMessage = new SimpleObjectProperty<>();
-    public final ObjectProperty<Boolean> RightClickBlankFlg = new SimpleObjectProperty<>(true);
-    public final ObjectProperty<Boolean> RightClickTaskBlockFlg = new SimpleObjectProperty<>(false);
+    // privateなプロパティ
+    private final ObjectProperty<Boolean> RightClickBlankFlg = new SimpleObjectProperty<>(true);
+    private final ObjectProperty<Boolean> RightClickTaskBlockFlg = new SimpleObjectProperty<>(false);
 
     // privateなフィールド
     /**
@@ -68,11 +69,11 @@ public class MainModel {
     /**
      * Canvasを処理するため止むなく引っ張るポインタ
      */
-    private Canvas taskBoard;
+    final private Canvas taskBoard;
     /**
      * 右クリックメニューを処理するため止むなく引っ張るポインタ
      */
-    private ContextMenu taskBoardMenu;
+    final private ContextMenu taskBoardMenu;
 
     // privateな処理
     /**
@@ -112,7 +113,7 @@ public class MainModel {
             Menu base = new Menu();
             base.visibleProperty().bindBidirectional(RightClickBlankFlg);
             base.setText(entry.getKey());
-            entry.getValue().stream().forEach(name ->{
+            entry.getValue().forEach(name ->{
                 MenuItem item = new MenuItem();
                 item.setText(name);
                 item.setOnAction(e -> addTaskBlock(item.getText()));
@@ -134,7 +135,7 @@ public class MainModel {
      * @return 干渉しているタスクブロックの一覧を返す
      */
     private List<TaskInfo> getInterferenceTaskList(TaskInfo wantAddingTask, int timePosition, int lane){
-        int newEndtimePosition = (timePosition + wantAddingTask.getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
+        int newEndtimePosition = (timePosition + wantAddingTask.getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
         return expTaskList.stream().filter(taskInfo -> {
             // 同一のタスクは飛ばす
             if (wantAddingTask.getX() == taskInfo.getX() && wantAddingTask.getY() == taskInfo.getY())
@@ -199,13 +200,13 @@ public class MainModel {
             return;
         // 遠征を追加する
         expTaskList.add(new TaskInfo(expInfo, lane, timePosition));
-        RedrawCanvasCommand(false);
+        RedrawCanvasCommand();
     }
     private void deleteTaskBlock(){
         int deleteTaskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
         if(deleteTaskBlockIndex != -1){
             expTaskList.remove(deleteTaskBlockIndex);
-            RedrawCanvasCommand(false);
+            RedrawCanvasCommand();
         }
     }
 
@@ -225,7 +226,7 @@ public class MainModel {
         if(file != null){
             // ファイルが開けたら、CSVデータに対する処理を行う
             try(Stream<String> data = Files.lines(file.toPath(), StandardCharsets.UTF_8)){
-                expTaskList = new ArrayList<TaskInfo>();
+                expTaskList = new ArrayList<>();
                 // 文字列をパースできるか判定を行い、できる場合はTaskInfo、できない場合はnullを返す
                 data.map(getLine -> {
                     try{
@@ -236,7 +237,7 @@ public class MainModel {
                     }
                 })
                 // nullを除外
-                .filter(t -> t != null)
+                .filter(Objects::nonNull)
                 // とりあえず配置してみて、置けないものは無視する
                 .forEach(t -> {
                     List<TaskInfo> temp = getInterferenceTaskList(t, t.getTimePosition(), t.getLane());
@@ -245,7 +246,7 @@ public class MainModel {
                     }
                 });
                 selectedExpTaskIndex = -1;
-                RedrawCanvasCommand(false);
+                RedrawCanvasCommand();
             } catch (IOException e) {
                 Utility.ShowDialog("ファイルを開けませんでした。", "読み込み情報", Alert.AlertType.ERROR);
                 e.printStackTrace();
@@ -317,7 +318,7 @@ public class MainModel {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.YES){
             expTaskList.clear();
-            RedrawCanvasCommand(false);
+            RedrawCanvasCommand();
         }
     }
     /**
@@ -355,7 +356,7 @@ public class MainModel {
         // ドラッグ途中点の座標を記録する
         dragMediumPoint = new Pair<>(e.getX(), e.getY());
         //Canvasを再描画する
-        RedrawCanvasCommand(true);
+        RedrawCanvasCommand();
         //
         e.consume();
     }
@@ -388,7 +389,7 @@ public class MainModel {
                 break;
             case 1:
             {
-                int newEndtimePosition = (newTimePosition + draggedTask.getTimePositionwidth()) % Utility.TASK_PIECE_SIZE;
+                int newEndtimePosition = (newTimePosition + draggedTask.getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
                 // 横方向について、ギリギリまで寄れるようにする
                 //右の距離と左の距離とを測定する
                 TaskInfo taskInfo = interferenceList.get(0);
@@ -400,7 +401,7 @@ public class MainModel {
                     draggedTask.setTimePosition(taskInfo.getEndTimePosition());
                 }else if(taskInfo.getTimePosition() < newEndtimePosition){
                     // 「左から寄った」と仮定する
-                    draggedTask.setTimePosition(taskInfo.getTimePosition() - draggedTask.getTimePositionwidth());
+                    draggedTask.setTimePosition(taskInfo.getTimePosition() - draggedTask.getTimePositionWidth());
                 }
             }
                 break;
@@ -418,7 +419,7 @@ public class MainModel {
             draggedExpTaskIndex = -1;
         }
         //Canvasを再描画する
-        RedrawCanvasCommand(false);
+        RedrawCanvasCommand();
         //
         e.consume();
     }
@@ -437,7 +438,7 @@ public class MainModel {
         }
         // クリックしたらその遠征についての情報をステータスバーに表示・画面も再描画
         selectedExpTaskIndex = getTaskBlockIndex(e.getX(), e.getY());
-        RedrawCanvasCommand(false);
+        RedrawCanvasCommand();
         // ダブルクリックなら詳細表示
         if(e.getClickCount() >= 2 && selectedExpTaskIndex >= 0){
             Utility.ShowDialog(expTaskList.get(selectedExpTaskIndex).toString(), "遠征の詳細", Alert.AlertType.INFORMATION);
@@ -445,29 +446,30 @@ public class MainModel {
     }
     /**
      * TaskBoardを再描画する
-     * @param mediumFlg trueなら、移動中の中間状態なオブジェクトを表示。<br>falseなら中間状態なオブジェクトを確定
      */
-    public void RedrawCanvasCommand(boolean mediumFlg) {
+    public void RedrawCanvasCommand() {
         // グラフィックスコンテキストを作成
         GraphicsContext gc = taskBoard.getGraphicsContext2D();
         // 画面を一旦削除
         gc.clearRect(0, 0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
         gc.setStroke(Color.GRAY);
-        IntStream.range(0, Utility.LANES + 1).forEach(row -> {
-            gc.strokeLine(
+        IntStream.range(0, Utility.LANES + 1).forEach(row ->
+                gc.strokeLine(
                     Utility.TASK_BOARD_MARGIN,
                     Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT,
                     Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH,
-                    Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT);
-        });
-        IntStream.range(0, Utility.HOUR_PER_DAY + 1).forEach(column -> {
+                    Utility.TASK_BOARD_MARGIN + row * Utility.TASK_PIECE_HEIGHT
+                )
+        );
+        IntStream.range(0, Utility.HOUR_PER_DAY + 1).forEach(column ->
             gc.strokeLine(
                     Utility.TASK_BOARD_MARGIN + column * Utility.HOUR_TASK_PIECE_WIDTH,
                     Utility.TASK_BOARD_MARGIN,
                     Utility.TASK_BOARD_MARGIN + column * Utility.HOUR_TASK_PIECE_WIDTH,
-                    Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT);
-        });
+                    Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_HEIGHT
+            )
+        );
         // 時刻を表示する
         gc.setFont(Font.font(16));
         gc.setFill(Color.BLACK);

@@ -14,13 +14,11 @@
             <SeparatorMenuItem/>
                 <MenuItem fx:id="ExitMenu" text="終了(_X)" />
             </Menu>
-         <Menu mnemonicParsing="false" text="操作(_A)">
-           <items>
-             <MenuItem fx:id="ShowInfoMenu" text="情報表示(_I)" />
-               <SeparatorMenuItem/>
-               <MenuItem fx:id="AllDeleteMenu" text="全削除(_D)" />
-           </items>
-         </Menu>
+            <Menu mnemonicParsing="false" text="操作(_A)">
+                <MenuItem fx:id="ShowInfoMenu" text="情報表示(_I)"/>
+                <SeparatorMenuItem/>
+                <MenuItem fx:id="AllDeleteMenu" text="全削除(_D)"/>
+            </Menu>
             <Menu text="ヘルプ(_H)">
                 <MenuItem fx:id="AboutMenu" text="バージョン情報(_A)" />
             </Menu>
@@ -28,12 +26,10 @@
     </top>
     <center>
         <ScrollPane BorderPane.alignment="CENTER">
-         <content>
-            <Canvas fx:id="TaskBoard" />
-         </content>
-         <contextMenu>
-            <ContextMenu fx:id="TaskBoardMenu" />
-         </contextMenu>
+            <contextMenu>
+                <ContextMenu fx:id="TaskBoardMenu"/>
+            </contextMenu>
+            <Canvas fx:id="TaskBoard"/>
         </ScrollPane>
     </center>
     <bottom>

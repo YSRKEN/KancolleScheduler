@@ -27,11 +27,11 @@ public class MainViewModel {
     /**
      * 「情報表示」メニュー
      */
-    public MenuItem ShowInfoMenu;
+    @FXML private MenuItem ShowInfoMenu;
     /**
      * 「全削除」メニュー
      */
-    public MenuItem AllDeleteMenu;
+    @FXML private MenuItem AllDeleteMenu;
     /**
      * 「バージョン情報」メニュー
      */
@@ -76,6 +76,6 @@ public class MainViewModel {
         TaskBoard.setOnMouseDragReleased(e -> mainModel.TaskBoardMouseDragReleased(e));
         TaskBoard.setOnMouseClicked(e -> mainModel.TaskBoardMouseClicked(e));
         // テスト
-        mainModel.RedrawCanvasCommand(false);
+        mainModel.RedrawCanvasCommand();
     }
 }
