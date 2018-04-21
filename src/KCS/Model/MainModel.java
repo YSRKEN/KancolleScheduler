@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -69,13 +71,17 @@ public class MainModel {
      */
     private List<TaskInfo> expTaskList = new ArrayList<>();
     /**
-     * Canvasを処理するため止むなく引っ張るポインタ
+     * TaskBoardでドラッグを開始するメソッド
      */
-    final private Canvas taskBoard;
+    final private Runnable startFullDragMethod;
+    /**
+     * TaskBoardのGraphicsContextを取得するメソッド
+     */
+    final private Supplier<GraphicsContext> getTaskBoardGCMethod;
     /**
      * 右クリックメニューを処理するため止むなく引っ張るポインタ
      */
-    final private ContextMenu taskBoardMenu;
+    final private Consumer<MenuItem> addTaskBoardMenu;
 
     // privateな処理
     /**
@@ -111,16 +117,16 @@ public class MainModel {
                 item.setOnAction(e -> addTaskBlock(item.getText()));
                 base.getItems().add(item);
             });
-            taskBoardMenu.getItems().add(base);
+            addTaskBoardMenu.accept(base);
         }
         // タスクをコピーするメニュー
         MenuItem copyMenu = new MenuItem();
         copyMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         copyMenu.setText("このタスクをコピー");
         copyMenu.setOnAction(e -> copyTaskBlock());
-        taskBoardMenu.getItems().add(copyMenu);
+        addTaskBoardMenu.accept(copyMenu);
         // セパレーター
-        taskBoardMenu.getItems().add(new SeparatorMenuItem());
+        addTaskBoardMenu.accept(new SeparatorMenuItem());
         // 大発による加算を考慮するメニュー
         Menu addPerMenu = new Menu();
         addPerMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
@@ -131,29 +137,29 @@ public class MainModel {
             item.setOnAction(e -> changeAddPerTaskBlock(item.getText()));
             addPerMenu.getItems().add(item);
         });
-        taskBoardMenu.getItems().add(addPerMenu);
+        addTaskBoardMenu.accept(addPerMenu);
         // 遠征に大成功したか否かを考慮するメニュー
         CheckMenuItem ciFlgMenu = new CheckMenuItem();
         ciFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         ciFlgMenu.selectedProperty().bindBidirectional(CiFlgProperty);
         ciFlgMenu.setText("大成功フラグ");
         ciFlgMenu.setOnAction(e -> changeCiFlgTaskBlock());
-        taskBoardMenu.getItems().add(ciFlgMenu);
+        addTaskBoardMenu.accept(ciFlgMenu);
         // ケッコン艦パーティーで出撃させたか否かを考慮するメニュー
         CheckMenuItem marriageFlgMenu = new CheckMenuItem();
         marriageFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         marriageFlgMenu.selectedProperty().bindBidirectional(MarriageFlgProperty);
         marriageFlgMenu.setText("ケッコン艦フラグ");
         marriageFlgMenu.setOnAction(e -> changeMarriageFlgTaskBlock());
-        taskBoardMenu.getItems().add(marriageFlgMenu);
+        addTaskBoardMenu.accept(marriageFlgMenu);
         // セパレーター
-        taskBoardMenu.getItems().add(new SeparatorMenuItem());
+        addTaskBoardMenu.accept(new SeparatorMenuItem());
         // タスクを削除するメニュー
         MenuItem deleteMenu = new MenuItem();
         deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         deleteMenu.setText("このタスクを削除");
         deleteMenu.setOnAction(e -> deleteTaskBlock());
-        taskBoardMenu.getItems().add(deleteMenu);
+        addTaskBoardMenu.accept(deleteMenu);
     }
     /**
      * 他のどのタスクブロックと干渉しているかを算出
@@ -415,7 +421,7 @@ public class MainModel {
                     expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
                     expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
             // ドラッグイベントを許可する
-            taskBoard.startFullDrag();
+            startFullDragMethod.run();
         }
         e.consume();
     }
@@ -523,7 +529,7 @@ public class MainModel {
      */
     public void RedrawCanvasCommand() {
         // グラフィックスコンテキストを作成
-        GraphicsContext gc = taskBoard.getGraphicsContext2D();
+        GraphicsContext gc = getTaskBoardGCMethod.get();
         // 画面を一旦削除
         gc.clearRect(0, 0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
@@ -612,9 +618,10 @@ public class MainModel {
     /**
      * コンストラクタ
      */
-    public MainModel(Canvas taskBoard, ContextMenu taskBoardMenu){
-        this.taskBoard = taskBoard;
-        this.taskBoardMenu = taskBoardMenu;
+    public MainModel(Runnable startFullDragMethod, Supplier<GraphicsContext> getTaskBoardGCMethod, Consumer<MenuItem> addTaskBoardMenu){
+        this.startFullDragMethod = startFullDragMethod;
+        this.getTaskBoardGCMethod = getTaskBoardGCMethod;
+        this.addTaskBoardMenu = addTaskBoardMenu;
         this.RightClickTaskBlockFlg.addListener((ob,o,n) -> RightClickBlankFlg.setValue(!n));
         // コンテキストメニューを初期化
         initializeContextMenu();
