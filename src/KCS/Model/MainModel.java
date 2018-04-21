@@ -85,24 +85,11 @@ public class MainModel {
      * @return タスクのインデックス(非選択なら-1)
      */
     private int getTaskBlockIndex(double mouseX, double mouseY){
-        return IntStream.range(0, expTaskList.size()).filter(i -> {
-            TaskInfo taskInfo = expTaskList.get(i);
-            if(taskInfo.getY() > mouseY || mouseY > taskInfo.getY() + taskInfo.getH())
-                return false;
-            // 動かすタスクが端で分割されているか否かで処理を分ける
-            if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()){
-                // 分割されていない場合
-                if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW())
-                    return true;
-            }else{
-                // 分割されている場合
-                if(taskInfo.getX() <= mouseX && mouseX <= Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH)
-                    return true;
-                if(Utility.TASK_BOARD_MARGIN <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW() - Utility.TASK_BOARD_WIDTH)
-                    return true;
-            }
-            return false;
-        }).findFirst().orElse(-1);
+        return IntStream
+                .range(0, expTaskList.size())
+                .filter(i -> expTaskList.get(i).isInnerPoint(mouseX, mouseY))
+                .findFirst()
+                .orElse(-1);
     }
     /**
      * コンテキストメニューを初期化
@@ -112,10 +99,13 @@ public class MainModel {
         LinkedHashMap<String, List<String>> expNameTree = DataStore.getExpNameTree();
         // 遠征ツリーをコンテキストメニューに反映させる
         for(Map.Entry<String, List<String>> entry : expNameTree.entrySet()){
+            // 海域名をbase(Menu型)の名前とする
             Menu base = new Menu();
             base.visibleProperty().bindBidirectional(RightClickBlankFlg);
             base.setText(entry.getKey());
+            // baseに、遠征毎の遠征のメニューを追加していく
             entry.getValue().forEach(name ->{
+                // 遠征名をitem(MenuItem型)の名前とする
                 MenuItem item = new MenuItem();
                 item.setText(name);
                 item.setOnAction(e -> addTaskBlock(item.getText()));
@@ -123,14 +113,15 @@ public class MainModel {
             });
             taskBoardMenu.getItems().add(base);
         }
-        //
+        // タスクをコピーするメニュー
         MenuItem copyMenu = new MenuItem();
         copyMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         copyMenu.setText("このタスクをコピー");
         copyMenu.setOnAction(e -> copyTaskBlock());
         taskBoardMenu.getItems().add(copyMenu);
+        // セパレーター
         taskBoardMenu.getItems().add(new SeparatorMenuItem());
-        //
+        // 大発による加算を考慮するメニュー
         Menu addPerMenu = new Menu();
         addPerMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         addPerMenu.setText("大発加算");
@@ -141,22 +132,23 @@ public class MainModel {
             addPerMenu.getItems().add(item);
         });
         taskBoardMenu.getItems().add(addPerMenu);
-        //
+        // 遠征に大成功したか否かを考慮するメニュー
         CheckMenuItem ciFlgMenu = new CheckMenuItem();
         ciFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         ciFlgMenu.selectedProperty().bindBidirectional(CiFlgProperty);
         ciFlgMenu.setText("大成功フラグ");
         ciFlgMenu.setOnAction(e -> changeCiFlgTaskBlock());
         taskBoardMenu.getItems().add(ciFlgMenu);
-        //
+        // ケッコン艦パーティーで出撃させたか否かを考慮するメニュー
         CheckMenuItem marriageFlgMenu = new CheckMenuItem();
         marriageFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         marriageFlgMenu.selectedProperty().bindBidirectional(MarriageFlgProperty);
         marriageFlgMenu.setText("ケッコン艦フラグ");
         marriageFlgMenu.setOnAction(e -> changeMarriageFlgTaskBlock());
         taskBoardMenu.getItems().add(marriageFlgMenu);
+        // セパレーター
         taskBoardMenu.getItems().add(new SeparatorMenuItem());
-        //
+        // タスクを削除するメニュー
         MenuItem deleteMenu = new MenuItem();
         deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         deleteMenu.setText("このタスクを削除");
@@ -171,50 +163,23 @@ public class MainModel {
      * @return 干渉しているタスクブロックの一覧を返す
      */
     private List<TaskInfo> getInterferenceTaskList(TaskInfo wantAddingTask, int timePosition, int lane){
-        int newEndtimePosition = (timePosition + wantAddingTask.getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
+        // 判定用の遠征タスクを生成する
+        TaskInfo wantAddingTaskTemp = wantAddingTask.clone();
+        wantAddingTaskTemp.setTimePosition(timePosition);
+        wantAddingTaskTemp.setLane(lane);
+        // 干渉している遠征タスクの一覧を返す
         return expTaskList.stream().filter(taskInfo -> {
             // 同一のタスクは飛ばす
-            if (wantAddingTask.getX() == taskInfo.getX() && wantAddingTask.getY() == taskInfo.getY())
+            if (taskInfo == wantAddingTask)
                 return false;
-            // 横方向について重なっていなければ飛ばす
-            // ・既存タスクAに対して目標タスクBが重なっているかを考える
-            // ・A.end = A.startまたはB.end = B.startならば確実に重なるので考慮不要
-            // ・Aが2つに分裂している場合、A.end < A.startである。Bがその間に収まって
-            // 　いればいいので、A.end <= B.startかつB.end <= A.startであればいい
-            // ・Aが2つに分裂していない場合、A.start < A.endである。Bがその前後に入って
-            // 　いればいいので、
-            // 　・Bが手前にある場合、B.start < B.endかつB.end <= A.start
-            // 　・Bが奥にある場合、B.start < B.endかつA.end <= B.start
-            // 　・BがAを包み込む場合、B.end < B.startかつB.end <= A.startかつA.end <= B.start
-            // ・これをまとめると、
-            // 　・A.end < A.startかつA.end <= B.startかつB.end <= A.start
-            // 　・A.start < A.endかつB.start <= B.endかつB.end <= A.start
-            // 　・A.start < A.endかつB.start <= B.endかつA.end <= B.start
-            // 　・B.end < B.startかつB.end <= A.startかつA.end <= B.start
-            // ・論理を整理して、
-            // 　・A.end <= B.startかつB.end <= A.startかつ(A.end < A.startまたはB.end < B.start)
-            // 　・A.start < A.endかつB.start < B.endかつ(B.end <= A.startまたはA.end <= B.start)
-            // ・A.end < A.startを[1]、A.end <= B.startを[2]、B.end <= A.startを[3]、B.end < B.startを[4]と置くと
-            // 　・[2]かつ[3]かつ([1]または[4])
-            // 　・![1]かつ![4]かつ([2]または[3])
-            // ・([2]かつ[3]かつ([1]または[4]))または(![1]かつ![4]かつ([2]または[3]))を論理圧縮すると、
-            // 　(![1]かつ[3]かつ![4])または(![1]かつ[2]かつ![4])または([2]かつ[3])
-            // 　＝([2]かつ[3])または(![1]かつ![4]かつ([2]または[3]))になるそうな
-            if(taskInfo.getTimePosition() != taskInfo.getEndTimePosition() && timePosition != newEndtimePosition){
-                boolean flg1 = (taskInfo.getEndTimePosition() <= taskInfo.getTimePosition());
-                boolean flg2 = (taskInfo.getEndTimePosition() <= timePosition);
-                boolean flg3 = (newEndtimePosition <= taskInfo.getTimePosition());
-                boolean flg4 = (newEndtimePosition <= timePosition);
-                if(flg2 && flg3 && (flg1 || flg4))
-                    return false;
-                if(!flg1 && !flg4 && (flg2 || flg3))
-                    return false;
-            }
+            // 横方向に干渉しない場合は飛ばす
+            if(!taskInfo.isInterference(wantAddingTaskTemp))
+                return false;
             // 遠征名が被っている場合はアウト
-            if(wantAddingTask.getName().equals(taskInfo.getName()))
+            if(wantAddingTaskTemp.getName().equals(taskInfo.getName()))
                 return true;
             // 同一艦隊の場合はアウト
-            if(lane == taskInfo.getLane())
+            if(wantAddingTaskTemp.getLane() == taskInfo.getLane())
                 return true;
             return false;
         }).collect(Collectors.toList());
@@ -424,17 +389,28 @@ public class MainModel {
         // 左クリックじゃないと無視する
         if(e.getButton() != MouseButton.PRIMARY)
             return;
-        // ドラッグ開始点がいずれかのタスクブロックの上だった場合、タスクブロックに対する相対座標を記録する
+        // ・ドラッグされている遠征タスクのインデックス(draggedExpTaskIndex)が
+        // 　・いずれの遠征タスクのものでもなかった場合、
+        // 　　マウスの位置が他の遠征タスクの上だったならば、
+        // 　　draggedExpTaskIndexをそれに設定する(A)
+        // 　・いずれかの遠征タスクのものだった場合、
+        // 　　その遠征タスクの位置をマウスの近くに変更する(B)
+        // ・draggedExpTaskIndexがいずれかの遠征タスクのものだった場合、
+        // 　その遠征タスクとマウスとのオフセット座標を記憶しておき、ドラッグイベントを許可する(C)
+        // ※Aを通った場合は当然Cも通り、Bを通った場合もCも通ることになる
         if(draggedExpTaskIndex == -1){
             int index = getTaskBlockIndex(e.getX(), e.getY());
             if(index != -1){
+                // (A)
                 draggedExpTaskIndex = index;
             }
         }else{
+            // (B)
             expTaskList.get(draggedExpTaskIndex).setTimePosition((int)((e.getX() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH));
             expTaskList.get(draggedExpTaskIndex).setLane((int)((e.getY() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT));
         }
         if(draggedExpTaskIndex != -1){
+            // (C)
             draggedExpTaskOffset = new Pair<>(
                     expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
                     expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
@@ -452,7 +428,6 @@ public class MainModel {
         dragMediumPoint = new Pair<>(e.getX(), e.getY());
         //Canvasを再描画する
         RedrawCanvasCommand();
-        //
         e.consume();
     }
     /**
@@ -470,8 +445,8 @@ public class MainModel {
             double newX = e.getX() + draggedExpTaskOffset.getKey();
             double newY = e.getY() + draggedExpTaskOffset.getValue();
             // 当該タスクブロックのタイミングおよび終了タイミングおよび艦隊番号
-            int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
-            int newLane = (int)Math.round((newY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+            int newTimePosition = Utility.mouseXToTimePosition(newX);
+            int newLane = Utility.mouseYToLane(newY);
             // 他のどのタスクブロックと干渉しているかを算出
             List<TaskInfo> interferenceList = getInterferenceTaskList(draggedTask, newTimePosition, newLane);
             // 何も干渉してない場合はそれでOK
@@ -584,81 +559,51 @@ public class MainModel {
         IntStream.range(0, expTaskList.size())
                 .filter(i -> i != draggedExpTaskIndex)
                 .forEach(i -> {
+                    // 遠征タスクの情報を取得する
                     TaskInfo taskInfo = expTaskList.get(i);
-                    double x = taskInfo.getX();
-                    double y = taskInfo.getY();
-                    double w = taskInfo.getW();
-                    double h = taskInfo.getH();
-                    if (i == selectedExpTaskIndex) {
-                        gc.setFill(Color.ORANGE);
-                    } else {
-                        gc.setFill(Color.LIGHTSKYBLUE);
-                    }
-                    if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()) {
-                        gc.fillRect(x, y, w, h);
-                        gc.strokeRect(x, y, w, h);
+                    // 遠征タスクの各描画部分を描画する
+                    taskInfo.getXWList().forEach(p -> {
+                        // 選択中かどうかで描画色を変更する
+                        if (i == selectedExpTaskIndex) {
+                            gc.setFill(Color.ORANGE);
+                        } else {
+                            gc.setFill(Color.LIGHTSKYBLUE);
+                        }
+                        // 枠と塗りつぶしを描く
+                        gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                        gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                        // 遠征名を描く
                         gc.setFill(Color.RED);
                         gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
-                    }else{
-                        double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
-                        double w3 = w - w2;
-                        double x2 = Utility.TASK_BOARD_MARGIN;
-                        gc.fillRect(x, y, w2, h);
-                        gc.strokeRect(x, y, w2, h);
-                        gc.fillRect(x2, y, w3, h);
-                        gc.strokeRect(x2, y, w3, h);
-                        gc.setFill(Color.RED);
-                        gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
-                        gc.fillText(taskInfo.getName(), x2 + 5, y + 16 + 5);
-                    }
+                        gc.fillText(taskInfo.getName(), p.getKey() + 5, taskInfo.getY() + 16 + 5);
+                    });
                 });
         // ドラッグ中のタスクを表示する
         if (draggedExpTaskIndex != -1 && draggedExpTaskOffset != null) {
-            // 選択されているタスク
-            TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex);
-            double x = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey();
-            double y = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue();
-            double w = taskInfo.getW();
-            double h = taskInfo.getH();
-            gc.setFill(Color.GREEN);
-            gc.setGlobalAlpha(0.5);
-            if(Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x >= w) {
-                gc.fillRect(x, y, w, h);
-                gc.strokeRect(x, y, w, h);
-            }else{
-                double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
-                double w3 = w - w2;
-                double x2 = Utility.TASK_BOARD_MARGIN;
-                gc.fillRect(x, y, w2, h);
-                gc.strokeRect(x, y, w2, h);
-                gc.fillRect(x2, y, w3, h);
-                gc.strokeRect(x2, y, w3, h);
-            }
+            // 選択されているタスクの情報を取得する
+            TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex).clone();
+            taskInfo.setTimePosition(Utility.mouseXToTimePosition(dragMediumPoint.getKey() + draggedExpTaskOffset.getKey()));
+            taskInfo.setLane(Utility.mouseYToLane(dragMediumPoint.getValue() + draggedExpTaskOffset.getValue()));
+            // 遠征タスクの各描画部分を描画する
+            taskInfo.getXWList().forEach(p -> {
+                // 枠と塗りつぶしを描く
+                gc.setFill(Color.LIGHTGREEN);
+                gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+            });
         }
         // 選択されているタスクの情報を表示する
         if (selectedExpTaskIndex != -1) {
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(selectedExpTaskIndex);
-            // タスクの開始時刻を時：分形式に変換
-            int allMinute = taskInfo.getTimePosition() * Utility.MIN_TASK_PIECE_TIME;
-            int hour = ((allMinute / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
-            int minute = allMinute % Utility.MINUTE_PER_HOUR;
-            // 終了時刻も時：分形式に変換
-            int allMinute2 = taskInfo.getEndTimePosition() * Utility.MIN_TASK_PIECE_TIME;
-            int hour2 = ((allMinute2 / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
-            int minute2 = allMinute2 % Utility.MINUTE_PER_HOUR;
             // 結果を表示
             Platform.runLater(() -> StatusMessage.setValue(
                     String.format(
-                            "%s(第%d艦隊,%02d:%02d-%02d:%02d)",
+                            "%s(第%d艦隊,%s-%s)",
                             taskInfo.getName(),
                             taskInfo.getLane() + 2,
-                            hour,
-                            minute,
-                            hour2,
-                            minute2
+                            Utility.timePositionToHourMinuteString(taskInfo.getTimePosition()),
+                            Utility.timePositionToHourMinuteString(taskInfo.getEndTimePosition())
                     )
             ));
         }

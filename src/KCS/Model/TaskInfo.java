@@ -3,16 +3,21 @@ package KCS.Model;
 import KCS.Library.Utility;
 import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
+import javafx.concurrent.Task;
+import javafx.util.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * タスク情報を表すクラス
  */
 class TaskInfo implements Cloneable {
+    // フィールド変数
     /**
      * タスクに割り当てられている遠征の情報
      */
     private ExpInfo expInfo;
-
     /**
      * 第何艦隊に割り当てられているか<br>
      * 第2艦隊→0、第3艦隊→1、第4艦隊→2
@@ -37,6 +42,7 @@ class TaskInfo implements Cloneable {
      */
     private boolean marriageFlg;
 
+    // 単なるgetter/setter
     /**
      * 第n艦隊かを返す
      * @return 第2艦隊→0、第3艦隊→1、第4艦隊→2
@@ -47,20 +53,6 @@ class TaskInfo implements Cloneable {
      * @return タイミング
      */
     public int getTimePosition() { return timePosition; }
-    /**
-     * 遠征の期間をTaskPiece単位で返す
-     * @return 遠征の期間
-     */
-    public int getTimePositionWidth(){
-        return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME;
-    }
-    /**
-     * 終了タイミングを返す
-     * @return 終了タイミング
-     */
-    public int getEndTimePosition(){
-        return (getTimePosition() + getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
-    }
     public boolean getCiFlg() { return this.ciFlg; }
     public boolean getMarriageFlg() { return this.marriageFlg; }
     /**
@@ -81,6 +73,114 @@ class TaskInfo implements Cloneable {
     public void setCiFlg(boolean ciFlg) { this.ciFlg = ciFlg; }
     public void setMarriageFlg(boolean marriageFlg) { this.marriageFlg = marriageFlg; }
 
+    // 計算を伴うgetter
+    /**
+     * 遠征の期間をTaskPiece単位で返す
+     * @return 遠征の期間
+     */
+    public int getTimePositionWidth(){
+        return expInfo.getTime() / Utility.MIN_TASK_PIECE_TIME;
+    }
+    /**
+     * 終了タイミングを返す
+     * @return 終了タイミング
+     */
+    public int getEndTimePosition(){
+        return (getTimePosition() + getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
+    }
+    /**
+     * 遠征名を取得する
+     * @return 遠征名
+     */
+    public String getName() { return expInfo.getName(); }
+    /**
+     * 獲得燃料を返す
+     * @return 獲得燃料
+     */
+    public long fuelValue(){ return expInfo.fuelValue(addPer, ciFlg, marriageFlg); }
+    /**
+     * 獲得弾薬を返す
+     * @return 獲得弾薬
+     */
+    public long ammoValue(){ return expInfo.ammoValue(addPer, ciFlg, marriageFlg); }
+    /**
+     * 獲得鋼材を返す
+     * @return 獲得鋼材
+     */
+    public long steelValue(){ return expInfo.steelValue(addPer, ciFlg); }
+    /**
+     * 獲得ボーキを返す
+     * @return 獲得ボーキ
+     */
+    public long bauxValue(){ return expInfo.bauxValue(addPer, ciFlg); }
+    /**
+     * 獲得バケツを返す
+     * @return 獲得バケツ
+     */
+    public double bucketValue(){ return expInfo.bucketValue(ciFlg); }
+    /**
+     * 獲得バーナーを返す
+     * @return 獲得バーナー
+     */
+    public double burnerValue(){ return expInfo.burnerValue(ciFlg); }
+    /**
+     * 獲得開発資材を返す
+     * @return 獲得開発資材
+     */
+    public double gearValue(){ return expInfo.gearValue(ciFlg); }
+    /**
+     * 獲得家具コインを返す
+     * @return 獲得家具コイン
+     */
+    public double coinValue(){ return expInfo.coinValue(ciFlg); }
+    /**
+     * 遠征タスクの情報をCSV形式で返す
+     * @return 遠征タスクの情報
+     */
+    public String toCsvData(){
+        return String.format("%s,%d,%d,%d,%d,%d%n",
+                this.getName(), this.getLane(), this.getTimePosition(), this.addPer,
+                this.ciFlg ? 1 : 0, this.marriageFlg ? 1 : 0);
+    }
+    /**
+     * Pair(タスク左座標, タスク幅)のListを返す
+     * 煩雑な処理を軽減することが狙い
+     */
+    public List<Pair<Integer, Integer>> getTimePositionWidthList(){
+        List<Pair<Integer, Integer>> list = new ArrayList<>();
+        if(this.getTimePosition() <= this.getEndTimePosition()) {
+            // タスクが分割されていない場合
+            list.add(new Pair<>(this.getTimePosition(), this.getTimePositionWidth()));
+        }else{
+            // タスクが分割されている場合
+            list.add(new Pair<>(this.getTimePosition(), Utility.TASK_PIECE_SIZE - this.getTimePosition()));
+            list.add(new Pair<>(0, this.getEndTimePosition()));
+        }
+        return list;
+    }
+    /**
+     * 2つのタスクが横方向に重複しているかを判定する
+     * @param other もう一つのタスク
+     * @return 重複していればtrue
+     */
+    public boolean isInterference(TaskInfo other) {
+        List<Pair<Integer, Integer>> list = this.getTimePositionWidthList();
+        // もう一つのタスクの左端が、このタスクの中に含まれていた場合は重複
+        if(list.stream().anyMatch(p ->
+            p.getKey() <= other.getTimePosition()
+            && other.getTimePosition() < p.getKey() + p.getValue())){
+            return true;
+        }
+        // もう一つのタスクの右端が、このタスクの中に含まれていた場合は重複
+        if(list.stream().anyMatch(p ->
+            p.getKey() < other.getEndTimePosition()
+            && other.getEndTimePosition() <= p.getKey() + p.getValue())){
+            return true;
+        }
+        return false;
+    }
+
+    // TaskBoardに置く際の座標関係のメソッド
     /**
      * タスクブロックにした際の横位置
      * @return 横位置
@@ -101,22 +201,35 @@ class TaskInfo implements Cloneable {
      * @return 縦幅
      */
     public double getH(){ return Utility.TASK_PIECE_HEIGHT; }
-
     /**
-     * 遠征名を取得する
-     * @return 遠征名
+     * Pair(ピクセル左座標, ピクセル幅)のListを返す
+     * 煩雑な処理を軽減することが狙い
      */
-    public String getName() { return expInfo.getName(); }
+    public List<Pair<Double, Double>> getXWList(){
+        List<Pair<Double, Double>> list = new ArrayList<>();
+        if(this.getTimePosition() <= this.getEndTimePosition()) {
+            // タスクが分割されていない場合
+            list.add(new Pair<>(getX(), getW()));
+        }else{
+            // タスクが分割されている場合
+            list.add(new Pair<>(getX(), Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - getX()));
+            list.add(new Pair<>(Utility.TASK_BOARD_MARGIN, getX() + getW() - Utility.TASK_BOARD_MARGIN - Utility.TASK_BOARD_WIDTH));
+        }
+        return list;
+    }
+    /**
+     * 入力座標が当該タスク内かを判定する
+     * @param mouseX 入力座標X
+     * @param mouseY 入力座標Y
+     * @return 入っていればtrue(境界線上はtrue扱い)
+     */
+    public boolean isInnerPoint(double mouseX, double mouseY){
+        if(mouseY < getY() || getY() + getH() < mouseY)
+            return false;
+        return getXWList().stream().anyMatch(p -> (p.getKey() <= mouseX && mouseX <= p.getKey() + p.getValue()));
+    }
 
-    public long fuelValue(){ return expInfo.fuelValue(addPer, ciFlg, marriageFlg); }
-    public long ammoValue(){ return expInfo.ammoValue(addPer, ciFlg, marriageFlg); }
-    public long steelValue(){ return expInfo.steelValue(addPer, ciFlg); }
-    public long bauxValue(){ return expInfo.bauxValue(addPer, ciFlg); }
-    public double bucketValue(){ return expInfo.bucketValue(ciFlg); }
-    public double burnerValue(){ return expInfo.burnerValue(ciFlg); }
-    public double gearValue(){ return expInfo.gearValue(ciFlg); }
-    public double coinValue(){ return expInfo.coinValue(ciFlg); }
-
+    // オーバライドされたメソッド
     /**
      * 遠征情報を文字列で返す
      * @return 遠征情報
@@ -137,17 +250,34 @@ class TaskInfo implements Cloneable {
         }
         return result;
     }
-
     /**
-     * 遠征タスクの情報をCSV形式で返す
-     * @return 遠征タスクの情報
+     * equalsメソッドをオーバライド
+     * 実装の参考：http://education.yachinco.net/tips/java/01/3.html
+     * @param other 判定したいオブジェクト
+     * @return 判定結果
      */
-    public String toCsvData(){
-        return String.format("%s,%d,%d,%d,%d,%d%n",
-                this.getName(), this.getLane(), this.getTimePosition(), this.addPer,
-                this.ciFlg ? 1 : 0, this.marriageFlg ? 1 : 0);
+    @Override public boolean equals(Object other){
+        if(this == other)
+            return true;
+        if (!(other instanceof TaskInfo))
+            return false;
+        TaskInfo otherTaskInfo = (TaskInfo) other;
+        if(this.timePosition != otherTaskInfo.timePosition)
+            return false;
+        if(this.lane != otherTaskInfo.lane)
+            return false;
+        return this.getName().equals(otherTaskInfo.getName());
+    }
+    /**
+     * hashCodeメソッドをオーバライド
+     * 実装の参考：http://education.yachinco.net/tips/java/01/4.html
+     * @return equals()がtrueになるなら必ずhashCode()は等しい
+     */
+    @Override public int hashCode(){
+        return (this.lane << 10) + this.timePosition;
     }
 
+    // コンストラクタ
     /**
      * コンストラクタ
      * @param expInfo 割り当てられる遠征
