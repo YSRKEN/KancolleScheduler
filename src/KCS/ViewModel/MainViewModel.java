@@ -7,8 +7,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -64,7 +66,8 @@ public class MainViewModel {
         // モデルを初期化
         Runnable startFullDragMethod = () -> TaskBoard.startFullDrag();
         Supplier<GraphicsContext> getTaskBoardGCMethod = () -> TaskBoard.getGraphicsContext2D();
-        mainModel = new MainModel(startFullDragMethod, getTaskBoardGCMethod, TaskBoardMenu);
+        Consumer<MenuItem> addTaskBoardMenu = m -> TaskBoardMenu.getItems().add(m);
+        mainModel = new MainModel(startFullDragMethod, getTaskBoardGCMethod, addTaskBoardMenu);
         // コントロールの大きさを直接指定
         TaskBoard.setWidth(Utility.CANVAS_WIDTH);
         TaskBoard.setHeight(Utility.CANVAS_HEIGHT);
