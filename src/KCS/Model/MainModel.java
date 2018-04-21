@@ -85,24 +85,11 @@ public class MainModel {
      * @return タスクのインデックス(非選択なら-1)
      */
     private int getTaskBlockIndex(double mouseX, double mouseY){
-        return IntStream.range(0, expTaskList.size()).filter(i -> {
-            TaskInfo taskInfo = expTaskList.get(i);
-            if(taskInfo.getY() > mouseY || mouseY > taskInfo.getY() + taskInfo.getH())
-                return false;
-            // 動かすタスクが端で分割されているか否かで処理を分ける
-            if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()){
-                // 分割されていない場合
-                if(taskInfo.getX() <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW())
-                    return true;
-            }else{
-                // 分割されている場合
-                if(taskInfo.getX() <= mouseX && mouseX <= Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH)
-                    return true;
-                if(Utility.TASK_BOARD_MARGIN <= mouseX && mouseX <= taskInfo.getX() + taskInfo.getW() - Utility.TASK_BOARD_WIDTH)
-                    return true;
-            }
-            return false;
-        }).findFirst().orElse(-1);
+        return IntStream
+                .range(0, expTaskList.size())
+                .filter(i -> expTaskList.get(i).isInnerPoint(mouseX, mouseY))
+                .findFirst()
+                .orElse(-1);
     }
     /**
      * コンテキストメニューを初期化
@@ -112,10 +99,13 @@ public class MainModel {
         LinkedHashMap<String, List<String>> expNameTree = DataStore.getExpNameTree();
         // 遠征ツリーをコンテキストメニューに反映させる
         for(Map.Entry<String, List<String>> entry : expNameTree.entrySet()){
+            // 海域名をbase(Menu型)の名前とする
             Menu base = new Menu();
             base.visibleProperty().bindBidirectional(RightClickBlankFlg);
             base.setText(entry.getKey());
+            // baseに、遠征毎の遠征のメニューを追加していく
             entry.getValue().forEach(name ->{
+                // 遠征名をitem(MenuItem型)の名前とする
                 MenuItem item = new MenuItem();
                 item.setText(name);
                 item.setOnAction(e -> addTaskBlock(item.getText()));
@@ -123,14 +113,15 @@ public class MainModel {
             });
             taskBoardMenu.getItems().add(base);
         }
-        //
+        // タスクをコピーするメニュー
         MenuItem copyMenu = new MenuItem();
         copyMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         copyMenu.setText("このタスクをコピー");
         copyMenu.setOnAction(e -> copyTaskBlock());
         taskBoardMenu.getItems().add(copyMenu);
+        // セパレーター
         taskBoardMenu.getItems().add(new SeparatorMenuItem());
-        //
+        // 大発による加算を考慮するメニュー
         Menu addPerMenu = new Menu();
         addPerMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         addPerMenu.setText("大発加算");
@@ -141,22 +132,23 @@ public class MainModel {
             addPerMenu.getItems().add(item);
         });
         taskBoardMenu.getItems().add(addPerMenu);
-        //
+        // 遠征に大成功したか否かを考慮するメニュー
         CheckMenuItem ciFlgMenu = new CheckMenuItem();
         ciFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         ciFlgMenu.selectedProperty().bindBidirectional(CiFlgProperty);
         ciFlgMenu.setText("大成功フラグ");
         ciFlgMenu.setOnAction(e -> changeCiFlgTaskBlock());
         taskBoardMenu.getItems().add(ciFlgMenu);
-        //
+        // ケッコン艦パーティーで出撃させたか否かを考慮するメニュー
         CheckMenuItem marriageFlgMenu = new CheckMenuItem();
         marriageFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         marriageFlgMenu.selectedProperty().bindBidirectional(MarriageFlgProperty);
         marriageFlgMenu.setText("ケッコン艦フラグ");
         marriageFlgMenu.setOnAction(e -> changeMarriageFlgTaskBlock());
         taskBoardMenu.getItems().add(marriageFlgMenu);
+        // セパレーター
         taskBoardMenu.getItems().add(new SeparatorMenuItem());
-        //
+        // タスクを削除するメニュー
         MenuItem deleteMenu = new MenuItem();
         deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
         deleteMenu.setText("このタスクを削除");
