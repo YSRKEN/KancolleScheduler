@@ -590,12 +590,15 @@ public class MainModel {
             TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex).clone();
             taskInfo.setTimePosition(Utility.mouseXToTimePosition(dragMediumPoint.getKey() + draggedExpTaskOffset.getKey()));
             taskInfo.setLane(Utility.mouseYToLane(dragMediumPoint.getValue() + draggedExpTaskOffset.getValue()));
+            // 描画前に、マウスとオブジェクトの座標との位置の誤差を算出し、オフセットとして計算する
+            double offsetX = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey() - taskInfo.getX();
+            double offsetY = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue() - taskInfo.getY();
             // 遠征タスクの各描画部分を描画する
             taskInfo.getXWList().forEach(p -> {
                 // 枠と塗りつぶしを描く
                 gc.setFill(Color.LIGHTGREEN);
-                gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
-                gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                gc.fillRect(p.getKey() + offsetX, taskInfo.getY() + offsetY, p.getValue(), taskInfo.getH());
+                gc.strokeRect(p.getKey() + offsetX, taskInfo.getY() + offsetY, p.getValue(), taskInfo.getH());
             });
         }
         // 選択されているタスクの情報を表示する
