@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -69,9 +70,13 @@ public class MainModel {
      */
     private List<TaskInfo> expTaskList = new ArrayList<>();
     /**
-     * Canvasを処理するため止むなく引っ張るポインタ
+     * TaskBoardでドラッグを開始するメソッド
      */
-    final private Canvas taskBoard;
+    final private Runnable startFullDragMethod;
+    /**
+     * TaskBoardのGraphicsContextを取得するメソッド
+     */
+    final private Supplier<GraphicsContext> getTaskBoardGCMethod;
     /**
      * 右クリックメニューを処理するため止むなく引っ張るポインタ
      */
@@ -415,7 +420,7 @@ public class MainModel {
                     expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
                     expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
             // ドラッグイベントを許可する
-            taskBoard.startFullDrag();
+            startFullDragMethod.run();
         }
         e.consume();
     }
@@ -523,7 +528,7 @@ public class MainModel {
      */
     public void RedrawCanvasCommand() {
         // グラフィックスコンテキストを作成
-        GraphicsContext gc = taskBoard.getGraphicsContext2D();
+        GraphicsContext gc = getTaskBoardGCMethod.get();
         // 画面を一旦削除
         gc.clearRect(0, 0, Utility.CANVAS_WIDTH, Utility.CANVAS_HEIGHT);
         // 格子を表示する
@@ -612,8 +617,9 @@ public class MainModel {
     /**
      * コンストラクタ
      */
-    public MainModel(Canvas taskBoard, ContextMenu taskBoardMenu){
-        this.taskBoard = taskBoard;
+    public MainModel(Runnable startFullDragMethod, Supplier<GraphicsContext> getTaskBoardGCMethod, ContextMenu taskBoardMenu){
+        this.startFullDragMethod = startFullDragMethod;
+        this.getTaskBoardGCMethod = getTaskBoardGCMethod;
         this.taskBoardMenu = taskBoardMenu;
         this.RightClickTaskBlockFlg.addListener((ob,o,n) -> RightClickBlankFlg.setValue(!n));
         // コンテキストメニューを初期化
