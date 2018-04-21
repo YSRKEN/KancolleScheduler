@@ -163,50 +163,23 @@ public class MainModel {
      * @return 干渉しているタスクブロックの一覧を返す
      */
     private List<TaskInfo> getInterferenceTaskList(TaskInfo wantAddingTask, int timePosition, int lane){
-        int newEndtimePosition = (timePosition + wantAddingTask.getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
+        // 判定用の遠征タスクを生成する
+        TaskInfo wantAddingTaskTemp = wantAddingTask.clone();
+        wantAddingTaskTemp.setTimePosition(timePosition);
+        wantAddingTaskTemp.setLane(lane);
+        // 干渉している遠征タスクの一覧を返す
         return expTaskList.stream().filter(taskInfo -> {
             // 同一のタスクは飛ばす
-            if (wantAddingTask.getX() == taskInfo.getX() && wantAddingTask.getY() == taskInfo.getY())
+            if (taskInfo == wantAddingTask)
                 return false;
-            // 横方向について重なっていなければ飛ばす
-            // ・既存タスクAに対して目標タスクBが重なっているかを考える
-            // ・A.end = A.startまたはB.end = B.startならば確実に重なるので考慮不要
-            // ・Aが2つに分裂している場合、A.end < A.startである。Bがその間に収まって
-            // 　いればいいので、A.end <= B.startかつB.end <= A.startであればいい
-            // ・Aが2つに分裂していない場合、A.start < A.endである。Bがその前後に入って
-            // 　いればいいので、
-            // 　・Bが手前にある場合、B.start < B.endかつB.end <= A.start
-            // 　・Bが奥にある場合、B.start < B.endかつA.end <= B.start
-            // 　・BがAを包み込む場合、B.end < B.startかつB.end <= A.startかつA.end <= B.start
-            // ・これをまとめると、
-            // 　・A.end < A.startかつA.end <= B.startかつB.end <= A.start
-            // 　・A.start < A.endかつB.start <= B.endかつB.end <= A.start
-            // 　・A.start < A.endかつB.start <= B.endかつA.end <= B.start
-            // 　・B.end < B.startかつB.end <= A.startかつA.end <= B.start
-            // ・論理を整理して、
-            // 　・A.end <= B.startかつB.end <= A.startかつ(A.end < A.startまたはB.end < B.start)
-            // 　・A.start < A.endかつB.start < B.endかつ(B.end <= A.startまたはA.end <= B.start)
-            // ・A.end < A.startを[1]、A.end <= B.startを[2]、B.end <= A.startを[3]、B.end < B.startを[4]と置くと
-            // 　・[2]かつ[3]かつ([1]または[4])
-            // 　・![1]かつ![4]かつ([2]または[3])
-            // ・([2]かつ[3]かつ([1]または[4]))または(![1]かつ![4]かつ([2]または[3]))を論理圧縮すると、
-            // 　(![1]かつ[3]かつ![4])または(![1]かつ[2]かつ![4])または([2]かつ[3])
-            // 　＝([2]かつ[3])または(![1]かつ![4]かつ([2]または[3]))になるそうな
-            if(taskInfo.getTimePosition() != taskInfo.getEndTimePosition() && timePosition != newEndtimePosition){
-                boolean flg1 = (taskInfo.getEndTimePosition() <= taskInfo.getTimePosition());
-                boolean flg2 = (taskInfo.getEndTimePosition() <= timePosition);
-                boolean flg3 = (newEndtimePosition <= taskInfo.getTimePosition());
-                boolean flg4 = (newEndtimePosition <= timePosition);
-                if(flg2 && flg3 && (flg1 || flg4))
-                    return false;
-                if(!flg1 && !flg4 && (flg2 || flg3))
-                    return false;
-            }
+            // 横方向に干渉しない場合は飛ばす
+            if(!taskInfo.isInterference(wantAddingTaskTemp))
+                return false;
             // 遠征名が被っている場合はアウト
-            if(wantAddingTask.getName().equals(taskInfo.getName()))
+            if(wantAddingTaskTemp.getName().equals(taskInfo.getName()))
                 return true;
             // 同一艦隊の場合はアウト
-            if(lane == taskInfo.getLane())
+            if(wantAddingTaskTemp.getLane() == taskInfo.getLane())
                 return true;
             return false;
         }).collect(Collectors.toList());

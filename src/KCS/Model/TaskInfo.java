@@ -3,6 +3,7 @@ package KCS.Model;
 import KCS.Library.Utility;
 import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
+import javafx.concurrent.Task;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -141,6 +142,43 @@ class TaskInfo implements Cloneable {
                 this.getName(), this.getLane(), this.getTimePosition(), this.addPer,
                 this.ciFlg ? 1 : 0, this.marriageFlg ? 1 : 0);
     }
+    /**
+     * Pair(タスク左座標, タスク幅)のListを返す
+     * 煩雑な処理を軽減することが狙い
+     */
+    public List<Pair<Integer, Integer>> getTimePositionWidthList(){
+        List<Pair<Integer, Integer>> list = new ArrayList<>();
+        if(this.getTimePosition() <= this.getEndTimePosition()) {
+            // タスクが分割されていない場合
+            list.add(new Pair<>(this.getTimePosition(), this.getTimePositionWidth()));
+        }else{
+            // タスクが分割されている場合
+            list.add(new Pair<>(this.getTimePosition(), Utility.TASK_PIECE_SIZE - this.getTimePosition()));
+            list.add(new Pair<>(0, this.getEndTimePosition()));
+        }
+        return list;
+    }
+    /**
+     * 2つのタスクが横方向に重複しているかを判定する
+     * @param other もう一つのタスク
+     * @return 重複していればtrue
+     */
+    public boolean isInterference(TaskInfo other) {
+        List<Pair<Integer, Integer>> list = this.getTimePositionWidthList();
+        // もう一つのタスクの左端が、このタスクの中に含まれていた場合は重複
+        if(list.stream().anyMatch(p ->
+            p.getKey() <= other.getTimePosition()
+            && other.getTimePosition() < p.getKey() + p.getValue())){
+            return true;
+        }
+        // もう一つのタスクの右端が、このタスクの中に含まれていた場合は重複
+        if(list.stream().anyMatch(p ->
+            p.getKey() < other.getEndTimePosition()
+            && other.getEndTimePosition() <= p.getKey() + p.getValue())){
+            return true;
+        }
+        return false;
+    }
 
     // TaskBoardに置く際の座標関係のメソッド
     /**
@@ -211,6 +249,32 @@ class TaskInfo implements Cloneable {
             e.printStackTrace();
         }
         return result;
+    }
+    /**
+     * equalsメソッドをオーバライド
+     * 実装の参考：http://education.yachinco.net/tips/java/01/3.html
+     * @param other 判定したいオブジェクト
+     * @return 判定結果
+     */
+    @Override public boolean equals(Object other){
+        if(this == other)
+            return true;
+        if (!(other instanceof TaskInfo))
+            return false;
+        TaskInfo otherTaskInfo = (TaskInfo) other;
+        if(this.timePosition != otherTaskInfo.timePosition)
+            return false;
+        if(this.lane != otherTaskInfo.lane)
+            return false;
+        return this.getName().equals(otherTaskInfo.getName());
+    }
+    /**
+     * hashCodeメソッドをオーバライド
+     * 実装の参考：http://education.yachinco.net/tips/java/01/4.html
+     * @return equals()がtrueになるなら必ずhashCode()は等しい
+     */
+    @Override public int hashCode(){
+        return (this.lane << 10) + this.timePosition;
     }
 
     // コンストラクタ
