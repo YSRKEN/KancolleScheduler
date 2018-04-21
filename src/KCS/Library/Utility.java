@@ -102,7 +102,6 @@ public class Utility {
     public static String DoubleToString(double x){
         return String.format("%f", x).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
-
     /**
      * マウスのX座標をタイミングに変換する
      * @param mouseX マウスのX座標
@@ -117,6 +116,18 @@ public class Utility {
      * @return 艦隊番号
      */
     public static int mouseYToLane(double mouseY){
-        return (int)Math.round((mouseY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+        return (int)Math.round((mouseY - TASK_BOARD_MARGIN) / TASK_PIECE_HEIGHT);
+    }
+
+    /**
+     * タイミングを時刻文字列に変換する
+     * @param timePosition タイミング
+     * @return 時刻文字列
+     */
+    public static String timePositionToHourMinuteString(int timePosition){
+        int allMinute = timePosition * MIN_TASK_PIECE_TIME;
+        int hour = ((allMinute / MINUTE_PER_HOUR) + TASK_BOARD_FIRST_HOUR) % HOUR_PER_DAY;
+        int minute = allMinute % MINUTE_PER_HOUR;
+        return String.format("%02d:%02d", hour, minute);
     }
 }

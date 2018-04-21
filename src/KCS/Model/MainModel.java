@@ -587,7 +587,7 @@ public class MainModel {
             // 遠征タスクの各描画部分を描画する
             taskInfo.getXWList().forEach(p -> {
                 // 枠と塗りつぶしを描く
-                gc.setFill(Color.GREEN);
+                gc.setFill(Color.LIGHTGREEN);
                 gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
                 gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
             });
@@ -596,24 +596,14 @@ public class MainModel {
         if (selectedExpTaskIndex != -1) {
             // 選択されているタスク
             TaskInfo taskInfo = expTaskList.get(selectedExpTaskIndex);
-            // タスクの開始時刻を時：分形式に変換
-            int allMinute = taskInfo.getTimePosition() * Utility.MIN_TASK_PIECE_TIME;
-            int hour = ((allMinute / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
-            int minute = allMinute % Utility.MINUTE_PER_HOUR;
-            // 終了時刻も時：分形式に変換
-            int allMinute2 = taskInfo.getEndTimePosition() * Utility.MIN_TASK_PIECE_TIME;
-            int hour2 = ((allMinute2 / Utility.MINUTE_PER_HOUR) + Utility.TASK_BOARD_FIRST_HOUR) % Utility.HOUR_PER_DAY;
-            int minute2 = allMinute2 % Utility.MINUTE_PER_HOUR;
             // 結果を表示
             Platform.runLater(() -> StatusMessage.setValue(
                     String.format(
-                            "%s(第%d艦隊,%02d:%02d-%02d:%02d)",
+                            "%s(第%d艦隊,%s-%s)",
                             taskInfo.getName(),
                             taskInfo.getLane() + 2,
-                            hour,
-                            minute,
-                            hour2,
-                            minute2
+                            Utility.timePositionToHourMinuteString(taskInfo.getTimePosition()),
+                            Utility.timePositionToHourMinuteString(taskInfo.getEndTimePosition())
                     )
             ));
         }
