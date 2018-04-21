@@ -594,12 +594,14 @@ public class MainModel {
             double offsetX = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey() - taskInfo.getX();
             double offsetY = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue() - taskInfo.getY();
             // 遠征タスクの各描画部分を描画する
+            gc.setGlobalAlpha(0.5);
             taskInfo.getXWList().forEach(p -> {
                 // 枠と塗りつぶしを描く
-                gc.setFill(Color.LIGHTGREEN);
+                gc.setFill(Color.GREEN);
                 gc.fillRect(p.getKey() + offsetX, taskInfo.getY() + offsetY, p.getValue(), taskInfo.getH());
                 gc.strokeRect(p.getKey() + offsetX, taskInfo.getY() + offsetY, p.getValue(), taskInfo.getH());
             });
+            gc.setGlobalAlpha(1.0);
         }
         // 選択されているタスクの情報を表示する
         if (selectedExpTaskIndex != -1) {
