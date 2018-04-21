@@ -24,6 +24,18 @@ class TaskInfo implements Cloneable {
      * 3×60/5-1=35と指定する
      */
     private int timePosition;
+    /**
+     * 大発による収益増加率(％単位)
+     */
+    private int addPer;
+    /**
+     * 大成功するならtrue
+     */
+    private boolean ciFlg;
+    /**
+     * 結婚艦を投入しているならtrue
+     */
+    private boolean marriageFlg;
 
     /**
      * 第n艦隊かを返す
@@ -49,6 +61,8 @@ class TaskInfo implements Cloneable {
     public int getEndTimePosition(){
         return (getTimePosition() + getTimePositionWidth()) % Utility.TASK_PIECE_SIZE;
     }
+    public boolean getCiFlg() { return this.ciFlg; }
+    public boolean getMarriageFlg() { return this.marriageFlg; }
     /**
      * 第n艦隊かをセットする
      * @param lane 第2艦隊→0、第3艦隊→1、第4艦隊→2
@@ -63,6 +77,10 @@ class TaskInfo implements Cloneable {
     public void setTimePosition(int timePosition) {
         this.timePosition = timePosition;
     }
+    public void setAddPer(int addPer) { this.addPer = addPer; }
+    public void setCiFlg(boolean ciFlg) { this.ciFlg = ciFlg; }
+    public void setMarriageFlg(boolean marriageFlg) { this.marriageFlg = marriageFlg; }
+
     /**
      * タスクブロックにした際の横位置
      * @return 横位置
@@ -83,12 +101,21 @@ class TaskInfo implements Cloneable {
      * @return 縦幅
      */
     public double getH(){ return Utility.TASK_PIECE_HEIGHT; }
+
     /**
      * 遠征名を取得する
      * @return 遠征名
      */
     public String getName() { return expInfo.getName(); }
-    public ExpInfo getExpInfo(){ return expInfo; }
+
+    public long fuelValue(){ return expInfo.fuelValue(addPer, ciFlg, marriageFlg); }
+    public long ammoValue(){ return expInfo.ammoValue(addPer, ciFlg, marriageFlg); }
+    public long steelValue(){ return expInfo.steelValue(addPer, ciFlg); }
+    public long bauxValue(){ return expInfo.bauxValue(addPer, ciFlg); }
+    public double bucketValue(){ return expInfo.bucketValue(ciFlg); }
+    public double burnerValue(){ return expInfo.burnerValue(ciFlg); }
+    public double gearValue(){ return expInfo.gearValue(ciFlg); }
+    public double coinValue(){ return expInfo.coinValue(ciFlg); }
 
     /**
      * 遠征情報を文字列で返す
@@ -97,6 +124,7 @@ class TaskInfo implements Cloneable {
     @Override public String toString() { return expInfo.toString(); }
     /**
      * cloneメソッドをオーバライド
+     * 実装の参考：https://qiita.com/SUZUKI_Masaya/items/8da8c0038797f143f5d3
      * @return 自身と同じ内容を持つインスタンス
      */
     @Override public TaskInfo clone(){
@@ -115,7 +143,9 @@ class TaskInfo implements Cloneable {
      * @return 遠征タスクの情報
      */
     public String toCsvData(){
-        return String.format("%s,%d,%d%n", this.getName(), this.getLane(), this.getTimePosition());
+        return String.format("%s,%d,%d,%d,%d,%d%n",
+                this.getName(), this.getLane(), this.getTimePosition(), this.addPer,
+                this.ciFlg ? 1 : 0, this.marriageFlg ? 1 : 0);
     }
 
     /**
@@ -150,9 +180,25 @@ class TaskInfo implements Cloneable {
         ExpInfo expInfo = DataStore.getExpInfoFromName(name);
         if(expInfo == null)
             throw new NumberFormatException("遠征名の指定に異常があります。");
+        // 収益増加率および大成功フラグおよびケッコン艦フラグは、取り出せた場合にのみ取り出す
+        int addPer = 0;
+        boolean ciFlg = false;
+        boolean marriageFlg = false;
+        if(temp.length >= 4){
+            if(temp.length < 6)
+                throw new NumberFormatException("CSVの列数に異常があります。");
+            addPer = Integer.parseInt(temp[3]);
+            addPer = (addPer / 5) * 5;
+            addPer = (addPer < 0 ? 0 : addPer > 20 ? 20 : addPer);
+            ciFlg = Integer.parseInt(temp[4]) > 0;
+            marriageFlg = Integer.parseInt(temp[5]) > 0;
+        }
         // 正常に初期化される
         this.expInfo = expInfo;
         this.lane = lane;
         this.timePosition = timePosition;
+        this.addPer = addPer;
+        this.ciFlg = ciFlg;
+        this.marriageFlg = marriageFlg;
     }
 }

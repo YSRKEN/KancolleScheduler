@@ -40,6 +40,8 @@ public class MainModel {
     // privateなプロパティ
     private final ObjectProperty<Boolean> RightClickBlankFlg = new SimpleObjectProperty<>(true);
     private final ObjectProperty<Boolean> RightClickTaskBlockFlg = new SimpleObjectProperty<>(false);
+    private final ObjectProperty<Boolean> CiFlgProperty = new SimpleObjectProperty<>(false);
+    private final ObjectProperty<Boolean> MarriageFlgProperty = new SimpleObjectProperty<>(false);
 
     // privateなフィールド
     /**
@@ -127,6 +129,33 @@ public class MainModel {
         copyMenu.setText("このタスクをコピー");
         copyMenu.setOnAction(e -> copyTaskBlock());
         taskBoardMenu.getItems().add(copyMenu);
+        taskBoardMenu.getItems().add(new SeparatorMenuItem());
+        //
+        Menu addPerMenu = new Menu();
+        addPerMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
+        addPerMenu.setText("大発加算");
+        IntStream.range(0, 5).map(i -> i * 5).forEach(i -> {
+            MenuItem item = new MenuItem();
+            item.setText(String.format("＋%d％", i));
+            item.setOnAction(e -> changeAddPerTaskBlock(item.getText()));
+            addPerMenu.getItems().add(item);
+        });
+        taskBoardMenu.getItems().add(addPerMenu);
+        //
+        CheckMenuItem ciFlgMenu = new CheckMenuItem();
+        ciFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
+        ciFlgMenu.selectedProperty().bindBidirectional(CiFlgProperty);
+        ciFlgMenu.setText("大成功フラグ");
+        ciFlgMenu.setOnAction(e -> changeCiFlgTaskBlock());
+        taskBoardMenu.getItems().add(ciFlgMenu);
+        //
+        CheckMenuItem marriageFlgMenu = new CheckMenuItem();
+        marriageFlgMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
+        marriageFlgMenu.selectedProperty().bindBidirectional(MarriageFlgProperty);
+        marriageFlgMenu.setText("ケッコン艦フラグ");
+        marriageFlgMenu.setOnAction(e -> changeMarriageFlgTaskBlock());
+        taskBoardMenu.getItems().add(marriageFlgMenu);
+        taskBoardMenu.getItems().add(new SeparatorMenuItem());
         //
         MenuItem deleteMenu = new MenuItem();
         deleteMenu.visibleProperty().bindBidirectional(RightClickTaskBlockFlg);
@@ -236,6 +265,38 @@ public class MainModel {
             RedrawCanvasCommand();
         }
     }
+    /**
+     * 遠征タスクの収益増加率を変更する
+     * @param name 変更情報(「＋%d％」という書式)
+     */
+    private void changeAddPerTaskBlock(String name){
+        int taskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+        if(taskBlockIndex != -1){
+            int addPer = Integer.parseInt(name.replace("＋", "").replace("％", ""));
+            expTaskList.get(taskBlockIndex).setAddPer(addPer);
+            RedrawCanvasCommand();
+        }
+    }
+    /**
+     * 遠征タスクのカットインフラグを変更する
+     */
+    private void changeCiFlgTaskBlock(){
+        int taskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+        if(taskBlockIndex != -1){
+            expTaskList.get(taskBlockIndex).setCiFlg(CiFlgProperty.getValue());
+            RedrawCanvasCommand();
+        }
+    }
+    /**
+     * 遠征タスクのケッコン艦フラグを変更する
+     */
+    private void changeMarriageFlgTaskBlock(){
+        int taskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
+        if(taskBlockIndex != -1){
+            expTaskList.get(taskBlockIndex).setMarriageFlg(MarriageFlgProperty.getValue());
+            RedrawCanvasCommand();
+        }
+    }
 
     // 各種コマンド
     /**
@@ -300,7 +361,7 @@ public class MainModel {
             return;
         }
         try(BufferedWriter bw = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)){
-            bw.write(String.format("遠征名,艦隊番号,タイミング%n"));
+            bw.write(String.format("遠征名,艦隊番号,タイミング,収益増加率,大成功フラグ,ケッコン艦フラグ%n"));
             for(TaskInfo task : expTaskList){
                 bw.write(task.toCsvData());
             }
@@ -319,14 +380,14 @@ public class MainModel {
      * 情報表示コマンド
      */
     public void ShowInfoCommand(){
-        long allFuel = expTaskList.stream().mapToLong(t->t.getExpInfo().fuelValue(0, false)).sum();
-        long allAmmo = expTaskList.stream().mapToLong(t->t.getExpInfo().ammoValue(0, false)).sum();
-        long allSteel = expTaskList.stream().mapToLong(t->t.getExpInfo().steelValue(0, false)).sum();
-        long allBaux = expTaskList.stream().mapToLong(t->t.getExpInfo().bauxValue(0, false)).sum();
-        double allBucket = expTaskList.stream().mapToDouble(t->t.getExpInfo().bucketValue(false)).sum();
-        double allBurner = expTaskList.stream().mapToDouble(t->t.getExpInfo().burnerValue(false)).sum();
-        double allGear = expTaskList.stream().mapToDouble(t->t.getExpInfo().gearValue( false)).sum();
-        double allCoin = expTaskList.stream().mapToDouble(t->t.getExpInfo().coinValue(false)).sum();
+        long allFuel = expTaskList.stream().mapToLong(TaskInfo::fuelValue).sum();
+        long allAmmo = expTaskList.stream().mapToLong(TaskInfo::ammoValue).sum();
+        long allSteel = expTaskList.stream().mapToLong(TaskInfo::steelValue).sum();
+        long allBaux = expTaskList.stream().mapToLong(TaskInfo::bauxValue).sum();
+        double allBucket = expTaskList.stream().mapToDouble(TaskInfo::bucketValue).sum();
+        double allBurner = expTaskList.stream().mapToDouble(TaskInfo::burnerValue).sum();
+        double allGear = expTaskList.stream().mapToDouble(TaskInfo::gearValue).sum();
+        double allCoin = expTaskList.stream().mapToDouble(TaskInfo::coinValue).sum();
         Utility.ShowDialog(String.format(
                 "燃料：%d　弾薬：%d　鋼材：%d　ボーキ：%d%nバケツ：%s　バーナー：%s%n開発資材：%s　家具コイン：%s",
                 allFuel, allAmmo, allSteel, allBaux,
@@ -468,6 +529,10 @@ public class MainModel {
             mouseRightClickPoint = new Pair<>(e.getX(), e.getY());
             int taskBlockIndex = getTaskBlockIndex(mouseRightClickPoint.getKey(), mouseRightClickPoint.getValue());
             RightClickTaskBlockFlg.setValue(taskBlockIndex != -1);
+            if(taskBlockIndex != -1) {
+                CiFlgProperty.setValue(expTaskList.get(taskBlockIndex).getCiFlg());
+                MarriageFlgProperty.setValue(expTaskList.get(taskBlockIndex).getMarriageFlg());
+            }
             return;
         }
         // クリックしたらその遠征についての情報をステータスバーに表示・画面も再描画

@@ -41,8 +41,8 @@ public class ExpInfo implements Cloneable {
      * @param ciFlg 大成功するか？
      * @return 燃料の収益
      */
-    public long fuelValue(int addPer, boolean ciFlg){
-        return Math.round(getFuel * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - lostFuel;
+    public long fuelValue(int addPer, boolean ciFlg, boolean marriageFlg){
+        return Math.round(getFuel * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - (long)(lostFuel * (marriageFlg ? 0.85 : 1.0));
     }
     /**
      * 弾薬の収益
@@ -50,8 +50,8 @@ public class ExpInfo implements Cloneable {
      * @param ciFlg 大成功するか？
      * @return 弾薬の収益
      */
-    public long ammoValue(int addPer, boolean ciFlg){
-        return Math.round(getAmmo * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - lostAmmo;
+    public long ammoValue(int addPer, boolean ciFlg, boolean marriageFlg){
+        return Math.round(getAmmo * (ciFlg ? 1.5 : 1.0) * (1.0 * (100 + addPer) / 100)) - (long)(lostAmmo * (marriageFlg ? 0.85 : 1.0));
     }
     /**
      * 鋼材の収益
@@ -233,6 +233,7 @@ public class ExpInfo implements Cloneable {
     }
     /**
      * cloneメソッドをオーバライド
+     * 実装の参考：https://qiita.com/SUZUKI_Masaya/items/8da8c0038797f143f5d3
      * @return 自身と同じ内容を持つインスタンス
      */
     @Override public ExpInfo clone(){
