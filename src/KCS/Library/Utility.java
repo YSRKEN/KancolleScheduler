@@ -102,4 +102,21 @@ public class Utility {
     public static String DoubleToString(double x){
         return String.format("%f", x).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
+
+    /**
+     * マウスのX座標をタイミングに変換する
+     * @param mouseX マウスのX座標
+     * @return タイミング
+     */
+    public static int mouseXToTimePosition(double mouseX){
+        return (int)Math.round((mouseX - TASK_BOARD_MARGIN) / TASK_PIECE_WIDTH);
+    }
+    /**
+     * マウスのY座標を艦隊番号に変換する
+     * @param mouseY マウスのY座標
+     * @return 艦隊番号
+     */
+    public static int mouseYToLane(double mouseY){
+        return (int)Math.round((mouseY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+    }
 }

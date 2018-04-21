@@ -389,17 +389,28 @@ public class MainModel {
         // 左クリックじゃないと無視する
         if(e.getButton() != MouseButton.PRIMARY)
             return;
-        // ドラッグ開始点がいずれかのタスクブロックの上だった場合、タスクブロックに対する相対座標を記録する
+        // ・ドラッグされている遠征タスクのインデックス(draggedExpTaskIndex)が
+        // 　・いずれの遠征タスクのものでもなかった場合、
+        // 　　マウスの位置が他の遠征タスクの上だったならば、
+        // 　　draggedExpTaskIndexをそれに設定する(A)
+        // 　・いずれかの遠征タスクのものだった場合、
+        // 　　その遠征タスクの位置をマウスの近くに変更する(B)
+        // ・draggedExpTaskIndexがいずれかの遠征タスクのものだった場合、
+        // 　その遠征タスクとマウスとのオフセット座標を記憶しておき、ドラッグイベントを許可する(C)
+        // ※Aを通った場合は当然Cも通り、Bを通った場合もCも通ることになる
         if(draggedExpTaskIndex == -1){
             int index = getTaskBlockIndex(e.getX(), e.getY());
             if(index != -1){
+                // (A)
                 draggedExpTaskIndex = index;
             }
         }else{
+            // (B)
             expTaskList.get(draggedExpTaskIndex).setTimePosition((int)((e.getX() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH));
             expTaskList.get(draggedExpTaskIndex).setLane((int)((e.getY() - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT));
         }
         if(draggedExpTaskIndex != -1){
+            // (C)
             draggedExpTaskOffset = new Pair<>(
                     expTaskList.get(draggedExpTaskIndex).getX() - e.getX(),
                     expTaskList.get(draggedExpTaskIndex).getY() - e.getY());
@@ -417,7 +428,6 @@ public class MainModel {
         dragMediumPoint = new Pair<>(e.getX(), e.getY());
         //Canvasを再描画する
         RedrawCanvasCommand();
-        //
         e.consume();
     }
     /**
@@ -435,8 +445,8 @@ public class MainModel {
             double newX = e.getX() + draggedExpTaskOffset.getKey();
             double newY = e.getY() + draggedExpTaskOffset.getValue();
             // 当該タスクブロックのタイミングおよび終了タイミングおよび艦隊番号
-            int newTimePosition = (int)Math.round((newX - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_WIDTH);
-            int newLane = (int)Math.round((newY - Utility.TASK_BOARD_MARGIN) / Utility.TASK_PIECE_HEIGHT);
+            int newTimePosition = Utility.mouseXToTimePosition(newX);
+            int newLane = Utility.mouseYToLane(newY);
             // 他のどのタスクブロックと干渉しているかを算出
             List<TaskInfo> interferenceList = getInterferenceTaskList(draggedTask, newTimePosition, newLane);
             // 何も干渉してない場合はそれでOK
@@ -549,58 +559,38 @@ public class MainModel {
         IntStream.range(0, expTaskList.size())
                 .filter(i -> i != draggedExpTaskIndex)
                 .forEach(i -> {
+                    // 遠征タスクの情報を取得する
                     TaskInfo taskInfo = expTaskList.get(i);
-                    double x = taskInfo.getX();
-                    double y = taskInfo.getY();
-                    double w = taskInfo.getW();
-                    double h = taskInfo.getH();
-                    if (i == selectedExpTaskIndex) {
-                        gc.setFill(Color.ORANGE);
-                    } else {
-                        gc.setFill(Color.LIGHTSKYBLUE);
-                    }
-                    if(taskInfo.getTimePosition() <= taskInfo.getEndTimePosition()) {
-                        gc.fillRect(x, y, w, h);
-                        gc.strokeRect(x, y, w, h);
+                    // 遠征タスクの各描画部分を描画する
+                    taskInfo.getXWList().forEach(p -> {
+                        // 選択中かどうかで描画色を変更する
+                        if (i == selectedExpTaskIndex) {
+                            gc.setFill(Color.ORANGE);
+                        } else {
+                            gc.setFill(Color.LIGHTSKYBLUE);
+                        }
+                        // 枠と塗りつぶしを描く
+                        gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                        gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                        // 遠征名を描く
                         gc.setFill(Color.RED);
                         gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
-                    }else{
-                        double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
-                        double w3 = w - w2;
-                        double x2 = Utility.TASK_BOARD_MARGIN;
-                        gc.fillRect(x, y, w2, h);
-                        gc.strokeRect(x, y, w2, h);
-                        gc.fillRect(x2, y, w3, h);
-                        gc.strokeRect(x2, y, w3, h);
-                        gc.setFill(Color.RED);
-                        gc.setFont(Font.font("", FontWeight.BOLD, 16));
-                        gc.fillText(taskInfo.getName(), x + 5, y + 16 + 5);
-                        gc.fillText(taskInfo.getName(), x2 + 5, y + 16 + 5);
-                    }
+                        gc.fillText(taskInfo.getName(), p.getKey() + 5, taskInfo.getY() + 16 + 5);
+                    });
                 });
         // ドラッグ中のタスクを表示する
         if (draggedExpTaskIndex != -1 && draggedExpTaskOffset != null) {
-            // 選択されているタスク
-            TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex);
-            double x = dragMediumPoint.getKey() + draggedExpTaskOffset.getKey();
-            double y = dragMediumPoint.getValue() + draggedExpTaskOffset.getValue();
-            double w = taskInfo.getW();
-            double h = taskInfo.getH();
-            gc.setFill(Color.GREEN);
-            gc.setGlobalAlpha(0.5);
-            if(Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x >= w) {
-                gc.fillRect(x, y, w, h);
-                gc.strokeRect(x, y, w, h);
-            }else{
-                double w2 = Utility.TASK_BOARD_MARGIN + Utility.TASK_BOARD_WIDTH - x;
-                double w3 = w - w2;
-                double x2 = Utility.TASK_BOARD_MARGIN;
-                gc.fillRect(x, y, w2, h);
-                gc.strokeRect(x, y, w2, h);
-                gc.fillRect(x2, y, w3, h);
-                gc.strokeRect(x2, y, w3, h);
-            }
+            // 選択されているタスクの情報を取得する
+            TaskInfo taskInfo = expTaskList.get(draggedExpTaskIndex).clone();
+            taskInfo.setTimePosition(Utility.mouseXToTimePosition(dragMediumPoint.getKey() + draggedExpTaskOffset.getKey()));
+            taskInfo.setLane(Utility.mouseYToLane(dragMediumPoint.getValue() + draggedExpTaskOffset.getValue()));
+            // 遠征タスクの各描画部分を描画する
+            taskInfo.getXWList().forEach(p -> {
+                // 枠と塗りつぶしを描く
+                gc.setFill(Color.GREEN);
+                gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+                gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
+            });
         }
         // 選択されているタスクの情報を表示する
         if (selectedExpTaskIndex != -1) {
