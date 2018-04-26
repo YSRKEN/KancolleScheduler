@@ -13,6 +13,9 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
@@ -573,7 +576,12 @@ public class MainModel {
                         if (i == selectedExpTaskIndex) {
                             gc.setFill(Color.ORANGE);
                         } else {
-                            gc.setFill(Color.LIGHTSKYBLUE);
+                            Stop[] stops = new Stop[]{
+                                new Stop(0, taskInfo.getFirstColor()),
+                                new Stop(1, taskInfo.getLastColor())
+                            };
+                            LinearGradient gra = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+                            gc.setFill(gra);
                         }
                         // 枠と塗りつぶしを描く
                         gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());

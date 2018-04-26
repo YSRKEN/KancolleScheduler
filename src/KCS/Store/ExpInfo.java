@@ -1,5 +1,8 @@
 package KCS.Store;
 
+import KCS.Library.Utility;
+import javafx.scene.paint.Color;
+
 /**
  * 遠征情報を表すクラス
  */
@@ -18,6 +21,7 @@ public class ExpInfo implements Cloneable {
     private final double getLeftBucket, getLeftBurner, getLeftGear, getLeftCoin;
     private final double getRightBucket, getRightBurner, getRightGear, getRightCoin;
     private final int lostFuel, lostAmmo;
+    private final Color firstColor, lastColor;
 
     /**
      * 遠征名を取得
@@ -34,6 +38,20 @@ public class ExpInfo implements Cloneable {
      * @return 海域名
      */
     public String getAreaName() { return areaName; }
+    /**
+     * 遠征色を取得-1
+     * @return 遠征色
+     */
+    public Color getFirstColor() {
+        return firstColor;
+    }
+    /**
+     * 遠征色を取得-2
+     * @return 遠征色
+     */
+    public Color getLastColor() {
+        return lastColor;
+    }
 
     /**
      * 燃料の収益
@@ -276,7 +294,8 @@ public class ExpInfo implements Cloneable {
                    int sumLevel, int minMemberSize, String wantFleetType, int time,
                    int getFuel, int getAmmo, int getSteel, int getBauxite, double getLeftBucket,
                    double getLeftBurner, double getLeftGear, double getLeftCoin, double getRightBucket,
-                   double getRightBurner, double getRightGear, double getRightCoin, int lostFuel, int lostAmmo) {
+                   double getRightBurner, double getRightGear, double getRightCoin, int lostFuel, int lostAmmo,
+                   int firstColorIndex, int lastColorIndex) {
         this.no = no;
         this.areaName = areaName;
         this.position = position;
@@ -300,5 +319,7 @@ public class ExpInfo implements Cloneable {
         this.getRightCoin = getRightCoin;
         this.lostFuel = lostFuel;
         this.lostAmmo = lostAmmo;
+        this.firstColor = Utility.EXP_COLORS[firstColorIndex];
+        this.lastColor = Utility.EXP_COLORS[lastColorIndex];
     }
 }

@@ -4,6 +4,7 @@ import KCS.Library.Utility;
 import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
 import javafx.concurrent.Task;
+import javafx.scene.paint.Color;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
@@ -93,6 +94,16 @@ class TaskInfo implements Cloneable {
      * @return 遠征名
      */
     public String getName() { return expInfo.getName(); }
+    /**
+     * 遠征色を取得-1
+     * @return 遠征色
+     */
+    public Color getFirstColor(){return expInfo.getFirstColor();}
+    /**
+     * 遠征色を取得-2
+     * @return 遠征色
+     */
+    public Color getLastColor(){return expInfo.getLastColor();}
     /**
      * 獲得燃料を返す
      * @return 獲得燃料

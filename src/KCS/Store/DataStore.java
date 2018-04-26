@@ -61,11 +61,20 @@ public class DataStore {
                 double getRightCoin     = Double.parseDouble(token[20]);
                 int lostFuel         = Integer.parseInt(token[21]);
                 int lostAmmo         = Integer.parseInt(token[22]);
+                int firstColorIndex = 0, lastColorIndex = 0;
+                if(token[23].length() == 1){
+                    firstColorIndex = lastColorIndex = Integer.parseInt(token[23]);
+                }else{
+                    int temp = Integer.parseInt(token[23]);
+                    firstColorIndex = temp / 10;
+                    lastColorIndex = temp % 10;
+                }
                 ExpInfo expInfo = new ExpInfo(no, areaName, position, name, leaderLevel,
                         sumLevel, minMemberSize, wantFleetType, time,
                         getFuel, getAmmo, getSteel, getBauxite, getLeftBucket,
                         getLeftBurner, getLeftGear, getLeftCoin, getRightBucket,
-                        getRightBurner, getRightGear, getRightCoin, lostFuel, lostAmmo);
+                        getRightBurner, getRightGear, getRightCoin, lostFuel, lostAmmo,
+                        firstColorIndex, lastColorIndex);
                 expList.add(expInfo);
             }
         } catch (IOException e) {

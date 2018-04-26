@@ -1,6 +1,7 @@
 package KCS.Library;
 
 import javafx.scene.control.Alert;
+import javafx.scene.paint.Color;
 
 /**
  * ユーティリティクラス
@@ -79,6 +80,16 @@ public class Utility {
      * Canvasの縦幅
      */
     public static final double CANVAS_HEIGHT = TASK_BOARD_HEIGHT + ADD_TASK_BOARD_HEIGHT + TASK_BOARD_MARGIN * 2;
+    /**
+     * 資材色。燃料・弾薬・鋼材・ボーキ・バケツを表す
+     */
+    public static final Color[] EXP_COLORS = new Color[]{
+            Color.GREENYELLOW,
+            Color.GOLDENROD,
+            Color.LIGHTGRAY,
+            Color.CHOCOLATE,
+            Color.LAWNGREEN
+    };
 
     /**
      * ダイアログを表示
