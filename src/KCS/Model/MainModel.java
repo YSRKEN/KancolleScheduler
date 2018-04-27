@@ -580,7 +580,7 @@ public class MainModel {
                                 new Stop(0, taskInfo.getFirstColor()),
                                 new Stop(1, taskInfo.getLastColor())
                             };
-                            LinearGradient gra = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+                            LinearGradient gra = new LinearGradient(0, 0.5, 1, 0.5, true, CycleMethod.NO_CYCLE, stops);
                             gc.setFill(gra);
                         }
                         // 枠と塗りつぶしを描く

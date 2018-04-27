@@ -14,7 +14,7 @@ public class Utility {
     /**
      * バージョン
      */
-    public static final String SOFT_VERSION = "1.2.0";
+    public static final String SOFT_VERSION = "1.3.0";
     /**
      * 24時間を区切る最小間隔(時間間隔)を分刻みで指定する
      */
@@ -88,7 +88,7 @@ public class Utility {
             Color.GOLDENROD,
             Color.LIGHTGRAY,
             Color.CHOCOLATE,
-            Color.LAWNGREEN
+            Color.VIOLET
     };
 
     /**
