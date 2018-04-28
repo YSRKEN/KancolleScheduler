@@ -15,7 +15,7 @@
             <SeparatorMenuItem/>
                 <MenuItem fx:id="ExitMenu" text="終了(_X)" />
             </Menu>
-            <Menu mnemonicParsing="false" text="操作(_A)">
+            <Menu text="操作(_A)">
                 <MenuItem fx:id="ShowInfoMenu" text="情報表示(_I)"/>
                 <SeparatorMenuItem/>
                 <MenuItem fx:id="AllDeleteMenu" text="全削除(_D)"/>
