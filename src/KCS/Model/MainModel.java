@@ -587,8 +587,10 @@ public class MainModel {
                         gc.fillRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
                         gc.strokeRect(p.getKey(), taskInfo.getY(), p.getValue(), taskInfo.getH());
                         // 遠征名を描く
-                        gc.setFill(Color.RED);
-                        gc.setFont(Font.font("", FontWeight.BOLD, 16));
+                        gc.setFont(Font.font("", FontWeight.BOLD, 18));
+                        gc.setFill(Color.WHITE);
+                        gc.fillText(taskInfo.getName(), p.getKey() + 7, taskInfo.getY() + 16 + 7);
+                        gc.setFill(Color.BLUE);
                         gc.fillText(taskInfo.getName(), p.getKey() + 5, taskInfo.getY() + 16 + 5);
                     });
                 });
