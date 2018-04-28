@@ -3,6 +3,7 @@ package KCS.Model;
 import KCS.Library.Utility;
 import KCS.Store.DataStore;
 import KCS.Store.ExpInfo;
+import com.sun.javafx.iio.ImageStorage;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -10,6 +11,8 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
@@ -24,6 +27,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Pair;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,6 +35,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -382,8 +387,48 @@ public class MainModel {
         // 保存用のデータを作成
         WritableImage wi = getCanvasImage.get();
         BufferedImage ri = SwingFXUtils.fromFXImage(wi, null);
+        BufferedImage ri2 = new BufferedImage(ri.getWidth(), ri.getHeight() + 24, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics g = null;
         try{
-            ImageIO.write(ri, "png", file);
+            g = ri2.getGraphics();
+            g.setColor(java.awt.Color.white);
+            g.fillRect(0, 0, ri2.getWidth(), ri2.getHeight());
+            g.setColor(java.awt.Color.black);
+            g.drawImage(ri, 0, 0, null);
+            long allFuel = expTaskList.stream().mapToLong(TaskInfo::fuelValue).sum();
+            long allAmmo = expTaskList.stream().mapToLong(TaskInfo::ammoValue).sum();
+            long allSteel = expTaskList.stream().mapToLong(TaskInfo::steelValue).sum();
+            long allBaux = expTaskList.stream().mapToLong(TaskInfo::bauxValue).sum();
+            double allBucket = expTaskList.stream().mapToDouble(TaskInfo::bucketValue).sum();
+            double allBurner = expTaskList.stream().mapToDouble(TaskInfo::burnerValue).sum();
+            double allGear = expTaskList.stream().mapToDouble(TaskInfo::gearValue).sum();
+            double allCoin = expTaskList.stream().mapToDouble(TaskInfo::coinValue).sum();
+            List<String> buffer = new ArrayList<>();
+            if(allFuel != 0)
+                buffer.add(String.format("燃料%d", allFuel));
+            if(allAmmo != 0)
+                buffer.add(String.format("弾薬%d", allAmmo));
+            if(allSteel != 0)
+                buffer.add(String.format("鋼材%d", allSteel));
+            if(allBaux != 0)
+                buffer.add(String.format("ボーキ%d", allBaux));
+            if(allBucket != 0)
+                buffer.add(String.format("バケツ%s", Utility.DoubleToString(allBucket)));
+            if(allBurner != 0)
+                buffer.add(String.format("バーナー%s", Utility.DoubleToString(allBurner)));
+            if(allGear != 0)
+                buffer.add(String.format("開発資材%s", Utility.DoubleToString(allGear)));
+            if(allCoin != 0)
+                buffer.add(String.format("家具コイン%s", Utility.DoubleToString(allCoin)));
+            g.setFont(new java.awt.Font("", java.awt.Font.BOLD, 36));
+            g.drawString(String.join(String.format(" "), buffer.toArray(new String[0])), 0, ri.getHeight() + 18);
+        }finally{
+            if(g != null)
+                g.dispose();
+        }
+        // 保存用のデータを保存
+        try{
+            ImageIO.write(ri2, "png", file);
         } catch (IOException e) {
             Utility.ShowDialog("ファイルを保存できませんでした。", "読み込み情報", Alert.AlertType.ERROR);
             e.printStackTrace();
