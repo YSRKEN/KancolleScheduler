@@ -105,6 +105,21 @@ class TaskInfo implements Cloneable {
      */
     public Color getLastColor(){return expInfo.getLastColor();}
     /**
+     * 遠征に掛かっているオプション情報を文字列として返す
+     * @return
+     */
+    public String getOptionText(){
+        List<String> buffer = new ArrayList<>();
+        if(addPer != 0)
+            buffer.add(String.format("+%d％", addPer));
+        if(ciFlg) {
+            buffer.add("[大成功]");
+        }
+        if(marriageFlg)
+            buffer.add("[結婚]");
+        return String.join(String.format("%n"), buffer.toArray(new String[0]));
+    }
+    /**
      * 獲得燃料を返す
      * @return 獲得燃料
      */

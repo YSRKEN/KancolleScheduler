@@ -592,6 +592,8 @@ public class MainModel {
                         gc.fillText(taskInfo.getName(), p.getKey() + 7, taskInfo.getY() + 16 + 7);
                         gc.setFill(Color.BLUE);
                         gc.fillText(taskInfo.getName(), p.getKey() + 5, taskInfo.getY() + 16 + 5);
+                        gc.setFill(Color.BLACK);
+                        gc.fillText(taskInfo.getOptionText(), p.getKey() + 5, taskInfo.getY() + 16 * 2 + 7);
                     });
                 });
         // ドラッグ中のタスクを表示する
