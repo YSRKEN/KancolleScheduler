@@ -629,6 +629,35 @@ public class MainModel {
                             Utility.timePositionToHourMinuteString(taskInfo.getEndTimePosition())
                     )
             ));
+        }else{
+            long allFuel = expTaskList.stream().mapToLong(TaskInfo::fuelValue).sum();
+            long allAmmo = expTaskList.stream().mapToLong(TaskInfo::ammoValue).sum();
+            long allSteel = expTaskList.stream().mapToLong(TaskInfo::steelValue).sum();
+            long allBaux = expTaskList.stream().mapToLong(TaskInfo::bauxValue).sum();
+            double allBucket = expTaskList.stream().mapToDouble(TaskInfo::bucketValue).sum();
+            double allBurner = expTaskList.stream().mapToDouble(TaskInfo::burnerValue).sum();
+            double allGear = expTaskList.stream().mapToDouble(TaskInfo::gearValue).sum();
+            double allCoin = expTaskList.stream().mapToDouble(TaskInfo::coinValue).sum();
+            List<String> buffer = new ArrayList<>();
+            if(allFuel != 0)
+                buffer.add(String.format("燃料%d", allFuel));
+            if(allAmmo != 0)
+                buffer.add(String.format("弾薬%d", allAmmo));
+            if(allSteel != 0)
+                buffer.add(String.format("鋼材%d", allSteel));
+            if(allBaux != 0)
+                buffer.add(String.format("ボーキ%d", allBaux));
+            if(allBucket != 0)
+                buffer.add(String.format("バケツ%s", Utility.DoubleToString(allBucket)));
+            if(allBurner != 0)
+                buffer.add(String.format("バーナー%s", Utility.DoubleToString(allBurner)));
+            if(allGear != 0)
+                buffer.add(String.format("開発資材%s", Utility.DoubleToString(allGear)));
+            if(allCoin != 0)
+                buffer.add(String.format("家具コイン%s", Utility.DoubleToString(allCoin)));
+            Platform.runLater(() -> StatusMessage.setValue(
+                    String.join(String.format(" "), buffer.toArray(new String[0]))
+            ));
         }
     }
 
