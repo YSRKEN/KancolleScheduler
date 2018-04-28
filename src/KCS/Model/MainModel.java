@@ -74,6 +74,10 @@ public class MainModel {
      */
     private List<TaskInfo> expTaskList = new ArrayList<>();
     /**
+     * 最後に選択したフォルダパス
+     */
+    private File lastSelectFolder = null;
+    /**
      * TaskBoardでドラッグを開始するメソッド
      */
     final private Runnable startFullDragMethod;
@@ -82,7 +86,7 @@ public class MainModel {
      */
     final private Supplier<GraphicsContext> getTaskBoardGCMethod;
     /**
-     * 右クリックメニューを処理するため止むなく引っ張るポインタ
+     * 右クリックメニューを追加するメソッド
      */
     final private Consumer<MenuItem> addTaskBoardMenu;
 
@@ -284,8 +288,11 @@ public class MainModel {
                 new FileChooser.ExtensionFilter("CSV", "*.csv"),
                 new FileChooser.ExtensionFilter("ALL", "*.*")
         );
+        if(lastSelectFolder != null)
+            fc.setInitialDirectory(lastSelectFolder);
         File file = fc.showOpenDialog(null);
         if(file != null){
+            lastSelectFolder = file.getParentFile();
             // ファイルが開けたら、CSVデータに対する処理を行う
             try(Stream<String> data = Files.lines(file.toPath(), StandardCharsets.UTF_8)){
                 expTaskList = new ArrayList<>();
@@ -326,9 +333,12 @@ public class MainModel {
                 new FileChooser.ExtensionFilter("CSV", "*.csv"),
                 new FileChooser.ExtensionFilter("ALL", "*.*")
         );
+        if(lastSelectFolder != null)
+            fc.setInitialDirectory(lastSelectFolder);
         File file = fc.showSaveDialog(null);
         if(file == null)
             return;
+        lastSelectFolder = file.getParentFile();
         // 保存用のテキストを作成
         if(expTaskList.size() == 0) {
             Utility.ShowDialog("遠征タスクが1つも存在しません。", "書き込み情報", Alert.AlertType.ERROR);
