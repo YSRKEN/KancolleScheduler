@@ -14,7 +14,7 @@ public class Utility {
     /**
      * バージョン
      */
-    public static final String SOFT_VERSION = "1.4.0";
+    public static final String SOFT_VERSION = "1.4.1";
     /**
      * 24時間を区切る最小間隔(時間間隔)を分刻みで指定する
      */

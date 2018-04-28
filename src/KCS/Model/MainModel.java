@@ -388,9 +388,9 @@ public class MainModel {
         WritableImage wi = getCanvasImage.get();
         BufferedImage ri = SwingFXUtils.fromFXImage(wi, null);
         BufferedImage ri2 = new BufferedImage(ri.getWidth(), ri.getHeight() + 24, BufferedImage.TYPE_3BYTE_BGR);
-        Graphics g = null;
+        Graphics2D g = null;
         try{
-            g = ri2.getGraphics();
+            g = (Graphics2D)ri2.getGraphics();
             g.setColor(java.awt.Color.white);
             g.fillRect(0, 0, ri2.getWidth(), ri2.getHeight());
             g.setColor(java.awt.Color.black);
@@ -421,6 +421,8 @@ public class MainModel {
             if(allCoin != 0)
                 buffer.add(String.format("家具コイン%s", Utility.DoubleToString(allCoin)));
             g.setFont(new java.awt.Font("", java.awt.Font.BOLD, 36));
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g.drawString(String.join(String.format(" "), buffer.toArray(new String[0])), 0, ri.getHeight() + 18);
         }finally{
             if(g != null)
