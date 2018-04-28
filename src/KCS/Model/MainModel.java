@@ -6,9 +6,11 @@ import KCS.Store.ExpInfo;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
@@ -21,6 +23,8 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.util.Pair;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -89,6 +93,10 @@ public class MainModel {
      * 右クリックメニューを追加するメソッド
      */
     final private Consumer<MenuItem> addTaskBoardMenu;
+    /**
+     * 遠征スケジュールを画像で保存するコマンド
+     */
+    final private Supplier<WritableImage> getCanvasImage;
 
     // privateな処理
     /**
@@ -349,6 +357,33 @@ public class MainModel {
             for(TaskInfo task : expTaskList){
                 bw.write(task.toCsvData());
             }
+        } catch (IOException e) {
+            Utility.ShowDialog("ファイルを保存できませんでした。", "読み込み情報", Alert.AlertType.ERROR);
+            e.printStackTrace();
+        }
+    }
+    /**
+     * スケジュール画像を保存コマンド
+     */
+    public void SavePictureMethod(){
+        // ファイルを選択
+        FileChooser fc = new FileChooser();
+        fc.setTitle("ファイルを保存");
+        fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("PNG", "*.png"),
+                new FileChooser.ExtensionFilter("ALL", "*.*")
+        );
+        if(lastSelectFolder != null)
+            fc.setInitialDirectory(lastSelectFolder);
+        File file = fc.showSaveDialog(null);
+        if(file == null)
+            return;
+        lastSelectFolder = file.getParentFile();
+        // 保存用のデータを作成
+        WritableImage wi = getCanvasImage.get();
+        BufferedImage ri = SwingFXUtils.fromFXImage(wi, null);
+        try{
+            ImageIO.write(ri, "png", file);
         } catch (IOException e) {
             Utility.ShowDialog("ファイルを保存できませんでした。", "読み込み情報", Alert.AlertType.ERROR);
             e.printStackTrace();
@@ -674,10 +709,15 @@ public class MainModel {
     /**
      * コンストラクタ
      */
-    public MainModel(Runnable startFullDragMethod, Supplier<GraphicsContext> getTaskBoardGCMethod, Consumer<MenuItem> addTaskBoardMenu){
+    public MainModel(
+            Runnable startFullDragMethod,
+            Supplier<GraphicsContext> getTaskBoardGCMethod,
+            Consumer<MenuItem> addTaskBoardMenu,
+            Supplier<WritableImage> getCanvasImage){
         this.startFullDragMethod = startFullDragMethod;
         this.getTaskBoardGCMethod = getTaskBoardGCMethod;
         this.addTaskBoardMenu = addTaskBoardMenu;
+        this.getCanvasImage = getCanvasImage;
         this.RightClickTaskBlockFlg.addListener((ob,o,n) -> RightClickBlankFlg.setValue(!n));
         // コンテキストメニューを初期化
         initializeContextMenu();

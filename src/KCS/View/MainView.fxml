@@ -11,6 +11,7 @@
             <Menu text="ファイル(_F)">
             <MenuItem fx:id="LoadFileMenu" text="開く(_O)..." />
             <MenuItem fx:id="SaveFileMenu" text="保存(_A)..." />
+            <MenuItem fx:id="SavePictureMenu" text="スケジュール画像を保存(_S)..." />
             <SeparatorMenuItem/>
                 <MenuItem fx:id="ExitMenu" text="終了(_X)" />
             </Menu>
